@@ -1,0 +1,47 @@
+// KEYWORD (NAME, NUMBER, LEXEME, TYPE)
+
+KEYWORD (IF,                   11, "если",             OPERATOR)
+KEYWORD (WHILE,                12, "пока",             OPERATOR)
+KEYWORD (ASSIGNMENT,           13, "сел по статье",    OPERATOR)
+
+KEYWORD (SIN,                  21, "синус",            OPERATOR)
+KEYWORD (COS,                  22, "косинус",          OPERATOR)
+KEYWORD (FLOOR,                23, "опустить",         OPERATOR)
+KEYWORD (ADD,                  24, "плюс",             OPERATOR)
+KEYWORD (SUB,                  25, "минус",            OPERATOR)
+KEYWORD (MUL,                  26, "помножить на",     OPERATOR)
+KEYWORD (DIV,                  27, "рассечь",          OPERATOR)
+KEYWORD (DIFF,                 28, "штрих",            OPERATOR)
+KEYWORD (SQRT,                 29, "сквирт",           OPERATOR)
+
+KEYWORD (EQUAL,                31, "корефанится с",    OPERATOR)
+KEYWORD (LESS,                 32, "сосет у",          OPERATOR)
+KEYWORD (GREATER,              33, "петушит",          OPERATOR)
+KEYWORD (LESS_OR_EQUAL,        34, "почти петушит",    OPERATOR)
+KEYWORD (GREATER_OR_EQUAL,     35, "почти сосет у",    OPERATOR)
+KEYWORD (NOT_EQUAL,            36, "путает рамсы с",   OPERATOR)
+KEYWORD (AND,                  37, "и",                OPERATOR)
+KEYWORD (OR,                   38, "или",              OPERATOR)
+KEYWORD (NOT,                  39, "не",               OPERATOR)
+
+KEYWORD (OPERATOR_SEPARATOR,   41, ".",                SEPARATOR)
+KEYWORD (ARGUMENT_SEPARATOR,   42, ",",                SEPARATOR)
+
+KEYWORD (NUMBER,               51, "фраер",            NAME_TYPE)
+
+KEYWORD (IN,                   61, "зашел в хату",     OPERATOR)
+KEYWORD (OUT,                  62, "откинулся",        OPERATOR)
+
+KEYWORD (RETURN,               71, "мусорнулся",       OPERATOR)
+KEYWORD (BREAK,                72, "шухер",            OPERATOR)
+KEYWORD (CONTINUE,             73, "мою парашу",       OPERATOR)
+KEYWORD (ABORT,                74, "посадили на перо", OPERATOR)
+
+KEYWORD (FUNCTION_DEFENITION,  81, "мотает срок",      SEPARATOR)
+KEYWORD (LEFT_BRACKET,         82, "(",                SEPARATOR)
+KEYWORD (RIGHT_BRACKET,        83, ")",                SEPARATOR)
+KEYWORD (BLOCK_OPEN,           84, "пошел раскумар",   SEPARATOR)
+KEYWORD (BLOCK_CLOSE,          85, "торкнуло",         SEPARATOR)
+KEYWORD (CONDITION_SEPARATOR,  86, "ништяк", SEPARATOR)
+KEYWORD (INITIAL_OPERATOR,     87, "вор в законе" , SEPARATOR)
+KEYWORD (FUNCTION_CALL,        88, "блатной",          SEPARATOR)

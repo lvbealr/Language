@@ -1,0 +1,6 @@
+[submodule "colorPrint"]
+	path = colorPrint
+	url = git@github.com:lvbealr/colorPrint.git
+[submodule "customWarning"]
+	path = customWarning
+	url = git@github.com:lvbealr/customWarning.git
