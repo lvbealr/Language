@@ -4,3 +4,6 @@
 [submodule "customWarning"]
 	path = customWarning
 	url = git@github.com:lvbealr/customWarning.git
+[submodule "Buffer"]
+	path = Buffer
+	url = git@github.com:livlavr/Buffer.git
