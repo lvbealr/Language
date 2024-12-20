@@ -76,7 +76,6 @@ parseError initializeTokenBuffer(Buffer<Keyword> *keywords, Buffer<char *> *buff
     for (int lineIndex = 0; lineIndex < buffer->size; lineIndex++) {
         charIndex = 0;
         while (LINE_[charIndex] != '\n' && LINE_[charIndex] != EOF) {
-            customPrint(yellow, bold, bgDefault, "%d\n", charIndex);
             scanLexeme(keywords, LINE_, tokens, &lineIndex, &charIndex);
         } 
     }
@@ -118,9 +117,7 @@ static parseError scanLexeme(Buffer<Keyword> *keywords, char *string, Buffer<Tok
 
     int startIndex = *charIndex;
 
-    tokenType type         = getTokenType(keywords, string, charIndex, &startIndex);
-
-    customPrint(lightblue, bold, bgDefault, "%d %d, %p %p\n", startIndex, *charIndex, &startIndex, charIndex);
+    tokenType type = getTokenType(keywords, string, charIndex, &startIndex);
 
     switch (type) {
         #define WORD_(type)                                                               \
@@ -135,7 +132,7 @@ static parseError scanLexeme(Buffer<Keyword> *keywords, char *string, Buffer<Tok
         WORD_(OPERATOR);
         WORD_(SEPARATOR);
         WORD_(NAME_TYPE);
-        WORD_(VAR_NAME);
+        WORD_(NAME);
         
         #undef WORD_
 
@@ -167,39 +164,37 @@ static void skipSpaces(char *string, int *pointer) {
 }
 
 static tokenType getTokenType(Buffer<Keyword> *keywords, char *string, int *charIndex, int *startIndex) {
+
     if (!keywords || !string || !charIndex) {
-        printf("1\n");
         return UNDEFINED;
     }
     
-    char *word = (char *)calloc(MAX_WORD_LENGTH + 1, sizeof(char)); // TODO FREE
+    char *word = (char *)calloc(MAX_WORD_LENGTH + 1, sizeof(char));
 
     if (!word) {
-        return UNDEFINED; // TODO
+        return UNDEFINED;
     }
 
     skipSpaces(string, charIndex);
 
     if (ispunct(SYMBOL_(charIndex))) {
-        customPrint(purple, bold, bgDefault, "%c\n", SYMBOL_(charIndex));
         (*startIndex) = (*charIndex);
         FIND_KEYWORD_(&(SYMBOL_(charIndex)));
-        return UNDEFINED; // TODO
-    } // НАШЕЛ SEPARATOR 
+
+        return UNDEFINED;
+    }
 
     if (isdigit(SYMBOL_(charIndex))) {
         return NUMBER;
-    } // НАШЕЛ NUMBER
+    }
 
     size_t letterNumber = 0;
     
     (*startIndex) = (*charIndex);
 
-    while ((isalpha(SYMBOL_(charIndex)) || ispunct(SYMBOL_(charIndex)))) { // TODO выход за границы чек
+    while ((isalpha(SYMBOL_(charIndex)) || ispunct(SYMBOL_(charIndex)))) { // TODO check going beyond boundaries
         word[letterNumber]     = SYMBOL_(charIndex);
         word[letterNumber + 1] = '\0';
-        // customPrint(red, bold, bgDefault, "===========================\n");
-        // printf("WORD: %s\n", word);
 
         FIND_KEYWORD_(word);
 
@@ -209,12 +204,11 @@ static tokenType getTokenType(Buffer<Keyword> *keywords, char *string, int *char
         if ((isalpha(SYMBOL_(charIndex)) && ispunct(SYMBOL_(charIndex - 1))) || (isalpha(SYMBOL_(charIndex - 1)) && ispunct(SYMBOL_(charIndex)))) {
                 break;
             }
-    } // НАШЕЛ ENG КЛЮЧЕВЫЕ СЛОВА ? ЕСЛИ ДА - СДЕЛАЛ RETURN, ЕСЛИ НЕТ - ПЕРЕМЕННАЯ ИЛИ НАЗВАНИЕ ФУНКЦИИ
+    }
 
-    letterNumber           = 2;
-    sleep(1);
+    letterNumber = 2;
 
-    while ((isCyrillic(&(SYMBOL_(charIndex)), CYRILLIC) || ispunct(SYMBOL_(charIndex)))) { // TODO выход за границы чек
+    while ((isCyrillic(&(SYMBOL_(charIndex)), CYRILLIC) || ispunct(SYMBOL_(charIndex)))) { // TODO check going beyond boundaries
         memcpy(word, &(SYMBOL_(startIndex)), letterNumber + 1);
         word[letterNumber + 1] = '\0';
         
@@ -233,10 +227,10 @@ static tokenType getTokenType(Buffer<Keyword> *keywords, char *string, int *char
         if (((isalpha(SYMBOL_(charIndex))     || isCyrillic(&(SYMBOL_(charIndex)),     CYRILLIC)) && ispunct(SYMBOL_(charIndex - 1))) ||
             ((isalpha(SYMBOL_(charIndex - 1)) || isCyrillic(&(SYMBOL_(charIndex - 1)), CYRILLIC)) && ispunct(SYMBOL_(charIndex)))) {
                 break;
-            }
-    } // НАШЕЛ RUS КЛЮЧЕВЫЕ СЛОВА ? ЕСЛИ ДА - СДЕЛАЛ RETURN, ЕСЛИ НЕТ - ПЕРЕМЕННАЯ ИЛИ НАЗВАНИЕ ФУНКЦИИ
+            } // TODO
+    }
 
-    return VAR_NAME; // ?
+    return NAME; // ?
 }
 
 
@@ -282,9 +276,6 @@ static parseError createToken(Buffer<Token> *tokens, tokenValue value, char *str
 	customWarning(lineIndex != NULL, (parseError) POINTER_IS_NULL);
 	customWarning(charIndex != NULL, (parseError) POINTER_IS_NULL);
 
-    printf("TOKEN TYPE IN TOKEN CREATE %d\n", type);
-    printf("TOKENS SIZE: %d\n", tokens->size);
-
     tokens->data[tokens->size].type = type;
 
     if (type == NUMBER) {
@@ -294,10 +285,6 @@ static parseError createToken(Buffer<Token> *tokens, tokenValue value, char *str
 
     else {
         tokens->data[tokens->size].data.pointer = value.pointer;
-    }
-
-    if (type != NUMBER) {
-        customPrint(green, bold, bgDefault, ">>> \n%s\n", tokens->data[tokens->size].data.pointer);
     }
 
     tokens->data[tokens->size].tokenIndex = *charIndex;

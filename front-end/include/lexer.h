@@ -23,7 +23,7 @@ enum tokenType {
     SEPARATOR = 3,
     NUMBER    = 4,
     NAME_TYPE = 5,
-    VAR_NAME  = 6,
+    NAME      = 6,
     UNDEFINED = 7
 };
 
