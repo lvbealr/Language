@@ -23,7 +23,7 @@ int main() {
 
     char s[50] = {};
 
-    static const char *array[] = {"LATIN", "CYRILLIC", "OPERATOR", "SEPARATOR", "NUMBER", "NAME", "VAR_NAME", "UNDEFINED"};
+    static const char *array[] = {"LATIN", "CYRILLIC", "OPERATOR", "SEPARATOR", "NUMBER", "NAME_TYPE", "NAME", "UNDEFINED"};
 
     for (size_t index = 0; index < tokens.size; index++) {
         if (tokens.data[index].type == NUMBER) {
