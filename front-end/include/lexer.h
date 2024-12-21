@@ -16,7 +16,7 @@ enum parseError {
     SYNTAX_ERROR              = 6
 };
 
-enum tokenType {
+enum class tokenType {
     LATIN     = 0,
     CYRILLIC  = 1,
     OPERATOR  = 2,

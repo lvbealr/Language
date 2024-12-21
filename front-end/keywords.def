@@ -1,0 +1,47 @@
+// KEYWORD (NAME, NUMBER, LEXEME, TYPE)
+
+KEYWORD (IF,                   11, "если",             nameType::OPERATOR)
+KEYWORD (WHILE,                12, "пока",             nameType::OPERATOR)
+KEYWORD (ASSIGNMENT,           13, "сел_по_статье",    nameType::OPERATOR)
+
+KEYWORD (SIN,                  21, "синус",            nameType::OPERATOR)
+KEYWORD (COS,                  22, "косинус",          nameType::OPERATOR)
+KEYWORD (FLOOR,                23, "опустить",         nameType::OPERATOR)
+KEYWORD (ADD,                  24, "плюс",             nameType::OPERATOR)
+KEYWORD (SUB,                  25, "минус",            nameType::OPERATOR)
+KEYWORD (MUL,                  26, "помножить_на",     nameType::OPERATOR)
+KEYWORD (DIV,                  27, "рассечь",          nameType::OPERATOR)
+KEYWORD (DIFF,                 28, "штрих",            nameType::OPERATOR)
+KEYWORD (SQRT,                 29, "сквирт",           nameType::OPERATOR)
+
+KEYWORD (EQUAL,                31, "корефанится_с",    nameType::OPERATOR)
+KEYWORD (LESS,                 32, "сосет_у",          nameType::OPERATOR)
+KEYWORD (GREATER,              33, "петушит",          nameType::OPERATOR)
+KEYWORD (LESS_OR_EQUAL,        34, "почти_петушит",    nameType::OPERATOR)
+KEYWORD (GREATER_OR_EQUAL,     35, "почти_сосет_у",    nameType::OPERATOR)
+KEYWORD (NOT_EQUAL,            36, "путает_рамсы_с",   nameType::OPERATOR)
+KEYWORD (AND,                  37, "как_и",            nameType::OPERATOR)
+KEYWORD (OR,                   38, "или",              nameType::OPERATOR)
+KEYWORD (NOT,                  39, "не",               nameType::OPERATOR)
+
+KEYWORD (OPERATOR_SEPARATOR,   41, ".",                nameType::SEPARATOR)
+KEYWORD (ARGUMENT_SEPARATOR,   42, ",",                nameType::SEPARATOR)
+
+KEYWORD (NUMBER,               51, "фраер",            nameType::NAME_TYPE)
+
+KEYWORD (IN,                   61, "зашел_в_хату",     nameType::OPERATOR)
+KEYWORD (OUT,                  62, "откинулся",        nameType::OPERATOR)
+
+KEYWORD (RETURN,               71, "мусорнулся",       nameType::OPERATOR)
+KEYWORD (BREAK,                72, "шухер",            nameType::OPERATOR)
+KEYWORD (CONTINUE,             73, "мою_парашу",       nameType::OPERATOR)
+KEYWORD (ABORT,                74, "посадили_на_перо", nameType::OPERATOR)
+
+KEYWORD (FUNCTION_DEFENITION,  81, "мотает_срок",      nameType::SEPARATOR)
+KEYWORD (LEFT_BRACKET,         82, "(",                nameType::SEPARATOR)
+KEYWORD (RIGHT_BRACKET,        83, ")",                nameType::SEPARATOR)
+KEYWORD (BLOCK_OPEN,           84, "пошел_раскумар",   nameType::SEPARATOR)
+KEYWORD (BLOCK_CLOSE,          85, "торкнуло",         nameType::SEPARATOR)
+KEYWORD (CONDITION_SEPARATOR,  86, "ништяк",           nameType::SEPARATOR)
+KEYWORD (INITIAL_OPERATOR,     87, "вор_в_законе",     nameType::SEPARATOR)
+KEYWORD (FUNCTION_CALL,        88, "блатной",          nameType::SEPARATOR)

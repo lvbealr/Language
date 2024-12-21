@@ -1,0 +1,50 @@
+Grammar ::= 'вор_в_законе' Identifier ' .'TranslationUnit Terminator
+TranslationUnit ::= ExternalDeclaration ' .' {TranslationUnit}?
+
+ExternalDeclaration ::= FunctionDefinition | Declaration
+
+AssignmentExpression ::= Identifier 'корефанится_с' Expression
+Expression ::= Priority5
+
+Priority5 ::= Priority4 {['как_и', 'или'] Priority4}*
+Priority4 ::= Priority3 {['корефанится_с', 'почти_сосет_у', 'почти_петушит', 'петушит', 'сосет_у', 'путает_рамсы_с'] Priority3}?
+Priority3 ::= Priority2 {['плюс', 'минус'] Priority2}*
+Priority2 ::= Priority1 {['помножить_на', 'рассечь'] Priority1}*
+Priority1 ::= ['синус', 'косинус', 'сквирт', 'опустить', 'не'] PrimaryExpression | PrimaryExpression
+
+PrimaryExpression ::= '( ' Priority5 ' )' | Diff | FunctionCall | Identifier | Constant | In
+
+If       ::= 'если' Expression 'ништяк' Operator
+While    ::= 'пока' Expression 'ништяк' Operator
+Return   ::= 'мусорнулся' Expression
+Break    ::= 'шухер'
+Continue ::= 'мою_парашу'
+Out      ::= 'откинулся' Expression
+In       ::= 'зашел_в_хату'
+Abort    ::= 'посадили_на_перо'
+
+TODO: Statement
+
+Statement 
+
+Operator ::= If | While | {{ Abort | Out | Return | Break | Continue | FunctionCall | AssignmentExpression | Declaration | 'пошел_раскумар' OperatorList 'торкнуло' } ' .'}
+OperatorList ::= Operator {OperatorList}?
+
+Declaration   ::= TypeSpecifier InitializerDeclarator
+TypeSpecifier ::= 'фраер'
+
+InitializerDeclarator ::= {AssignmentExpression | Identifier}
+
+FunctionDefinition ::= 'мотает_срок' TypeSpecifier Identifier '( ' ParameterList ' )' 'пошел_раскумар' OperatorList 'торкнуло'
+FunctionCall       ::= 'блатной' Identifier '( ' ArgumentList ' )' 
+
+ArgumentList  ::= Expression  {' , ' ArgumentList}?
+ParameterList ::= Declaration {' , ' ParameterList}?
+
+Diff := 'штрих' '( ' Identifier ' ,' DiffPriority3 ')' //
+
+DiffPriority3 ::= DiffPriority2 {['плюс', 'минус'] DiffPriority2}*
+DiffPriority2 ::= DiffPriority1 {['помножить_на', 'рассечь'] DiffPriority1}*
+DiffPriority1 ::= ['синус', 'косинус'] PrimaryExpression | PrimaryExpression
+
+Identifier    ::= [a-zA-Z_]
