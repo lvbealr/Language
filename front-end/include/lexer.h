@@ -5,6 +5,7 @@
 
 #include "bufferExtensions.h"
 #include "buffer.h"
+#include "AST.h"
 
 enum parseError {
     NO_PARSE_ERRORS           = 0,
@@ -16,19 +17,8 @@ enum parseError {
     SYNTAX_ERROR              = 6
 };
 
-enum class tokenType {
-    LATIN     = 0,
-    CYRILLIC  = 1,
-    OPERATOR  = 2,
-    SEPARATOR = 3,
-    NUMBER    = 4,
-    NAME_TYPE = 5,
-    NAME      = 6,
-    UNDEFINED = 7
-};
-
 union tokenValue {
-    double value;
+    int    value;
     char  *pointer;
 };
 
@@ -41,13 +31,13 @@ const size_t KEYWORD_NUMBER    =
 struct Keyword {
     size_t      keywordID     = {};
     const char *name          = {};
-    tokenType   type          = {};
+    nameType    type          = {};
     size_t      keywordLength = {};
 };
 
 struct Token {
     tokenValue data         = {};
-    tokenType  type         = {};
+    nameType   type         = {};
     int        line         = {};
     int        tokenIndex   = {};
 };

@@ -14,7 +14,11 @@ enum class compilationError { // TODO
     LOCAL_TABLES_ERROR          = 4,
     AST_ERROR                   = 5,
     FUNCTION_CALLS_BUFFER_ERROR = 6,
-    TOKEN_INDEX_IS_OUT_OF_RANGE = 7
+    TOKEN_INDEX_IS_OUT_OF_RANGE = 7,
+    CONSTANT_EXPECTED           = 8,
+    INITIAL_OPERATOR_EXPECTED   = 9,
+    IDENTIFIER_EXPECTED         = 10,
+    OPERATOR_SEPARATOR_EXPECTED = 11
 };
 
 struct compilationBuffer {
@@ -24,14 +28,16 @@ struct compilationBuffer {
 
     binaryTree<astNode>      *AST           = {};
 
-    Buffer<node<astNode> *>  *functionCalls = {};
+    size_t currentToken                     = {};
 
-    size_t currentToken                     = {}; // for recursive descent parser
+    int currentScope                        = -1;
 }; // TODO
 
 // TODO FUNCTIONS TO INITIALIZE ALL FIELD, NOW FROM MAIN ((
 
 compilationError dumpTokenList(compilationBuffer *content);
 compilationError dumpToken    (compilationBuffer *content, size_t tokenIndex);
+
+node<astNode> *ASTnodeCreate(node<astNode> nodeData);
 
 #endif // CORE_H_

@@ -19,9 +19,9 @@
 #define CREATE_TOKEN_(value, type)                                  \
     createToken(tokens, value, string, lineIndex, charIndex, type);
 
-#define SCAN_DOUBLE_()                                              \
-    sscanf(&(SYMBOL_(charIndex)), "%lg%n", &number, &numberLength); \
-    CREATE_TOKEN_(tokenValue {.value = number}, tokenType::NUMBER); \
+#define SCAN_INT_()                                                 \
+    sscanf(&(SYMBOL_(charIndex)), "%d%n", &number, &numberLength);  \
+    CREATE_TOKEN_(tokenValue {.value = number}, nameType::NUMBER);  \
     tokens->count++;                                                \
     (*charIndex) += numberLength;                                   \
 
@@ -39,7 +39,7 @@
 #define FIND_KEYWORD_(str)                                                                    \
     for (size_t index = 0; index < keywords->capacity; index++) {                             \
         if (!strncmp(keywords->data[index].name, str, keywords->data[index].keywordLength)) { \
-            if (isCyrillic(&(SYMBOL_(charIndex)), tokenType::CYRILLIC)) {                     \
+            if (isCyrillic(&(SYMBOL_(charIndex)), nameType::CYRILLIC)) {                     \
                 (*charIndex) += 2;                                                            \
             }                                                                                 \
                                                                                               \
@@ -55,10 +55,10 @@
 static const size_t MAX_WORD_LENGTH = 100;
 
 static parseError scanLexeme       (Buffer<Keyword> *keywords, char          *string,    Buffer<Token> *tokens,    int *lineIndex, int *charIndex);
-static parseError createToken      (Buffer<Token>   *tokens,   tokenValue     value,     char          *string,    int *lineIndex, int *charIndex, tokenType type);
-static tokenType  getTokenType     (Buffer<Keyword> *keywords, char          *string,    int           *charIndex, int *startIndex);
+static parseError createToken      (Buffer<Token>   *tokens,   tokenValue     value,     char          *string,    int *lineIndex, int *charIndex, nameType type);
+static nameType  getnameType     (Buffer<Keyword> *keywords, char          *string,    int           *charIndex, int *startIndex);
 static void       skipSpaces       (char            *string,   int           *pointer);
-static int        isCyrillic       (char            *string,   tokenType      type);
+static int        isCyrillic       (char            *string,   nameType      type);
 static parseError writeSyntaxError (char            *string,   int           *lineIndex, int           *charIndex);
 
 parseError initializeTokenBuffer(Buffer<Keyword> *keywords, Buffer<char *> *buffer, Buffer<Token> *tokens, int tokensCount) {
@@ -90,7 +90,7 @@ parseError initializeKeywordBuffer(Buffer<Keyword> *keywords, const size_t keywo
     size_t keywordIndex = 0;
 
     #define KEYWORD(NAME, NUMBER, LEXEME, TYPE)                                                                             \
-        keywords->data[keywordIndex++] = {.keywordID = NUMBER, .name = LEXEME, .type = static_cast <tokenType> (TYPE), .keywordLength = strlen(LEXEME)};
+        keywords->data[keywordIndex++] = {.keywordID = NUMBER, .name = LEXEME, .type = static_cast <nameType> (TYPE), .keywordLength = strlen(LEXEME)};
 
     #include "keywords.def"
 
@@ -110,12 +110,12 @@ static parseError scanLexeme(Buffer<Keyword> *keywords, char *string, Buffer<Tok
 
     skipSpaces(string, charIndex);
     
-    double    number       = 0;
+    int       number       = 0;
     int       numberLength = 0;
 
     int startIndex = *charIndex;
 
-    tokenType type = getTokenType(keywords, string, charIndex, &startIndex);
+    nameType type = getnameType(keywords, string, charIndex, &startIndex);
 
     switch (type) {
         #define WORD_(type)                                                               \
@@ -126,22 +126,22 @@ static parseError scanLexeme(Buffer<Keyword> *keywords, char *string, Buffer<Tok
                     break;                                                                \
                 }
 
-        WORD_(tokenType::LATIN);
-        WORD_(tokenType::CYRILLIC);
-        WORD_(tokenType::OPERATOR);
-        WORD_(tokenType::SEPARATOR);
-        WORD_(tokenType::NAME_TYPE);
-        WORD_(tokenType::NAME);
+        WORD_(nameType::LATIN);
+        WORD_(nameType::CYRILLIC);
+        WORD_(nameType::OPERATOR);
+        WORD_(nameType::SEPARATOR);
+        WORD_(nameType::NAME_TYPE);
+        WORD_(nameType::NAME);
         
         #undef WORD_
 
-		case tokenType::NUMBER:
+		case nameType::NUMBER:
 			{
-				SCAN_DOUBLE_();
+				SCAN_INT_();
 				break;
 			}
 		
-		case tokenType::UNDEFINED:
+		case nameType::UNDEFINED:
 		default:
 			{
 				writeSyntaxError(string, lineIndex, &startIndex);
@@ -162,16 +162,16 @@ static void skipSpaces(char *string, int *pointer) {
     }
 }
 
-static tokenType getTokenType(Buffer<Keyword> *keywords, char *string, int *charIndex, int *startIndex) {
+static nameType getnameType(Buffer<Keyword> *keywords, char *string, int *charIndex, int *startIndex) {
 
     if (!keywords || !string || !charIndex) {
-        return tokenType::UNDEFINED;
+        return nameType::UNDEFINED;
     }
     
     char *word = (char *)calloc(MAX_WORD_LENGTH + 1, sizeof(char));
 
     if (!word) {
-        return tokenType::UNDEFINED;
+        return nameType::UNDEFINED;
     }
 
     skipSpaces(string, charIndex);
@@ -180,11 +180,11 @@ static tokenType getTokenType(Buffer<Keyword> *keywords, char *string, int *char
         (*startIndex) = (*charIndex);
         FIND_KEYWORD_(&(SYMBOL_(charIndex)));
 
-        return tokenType::UNDEFINED;
+        return nameType::UNDEFINED;
     }
 
     if (isdigit(SYMBOL_(charIndex))) {
-        return tokenType::NUMBER;
+        return nameType::NUMBER;
     }
 
     size_t letterNumber = 0;
@@ -207,13 +207,13 @@ static tokenType getTokenType(Buffer<Keyword> *keywords, char *string, int *char
 
     letterNumber = 2;
 
-    while ((isCyrillic(&(SYMBOL_(charIndex)), tokenType::CYRILLIC) || ispunct(SYMBOL_(charIndex)))) { // TODO check going beyond boundaries
+    while ((isCyrillic(&(SYMBOL_(charIndex)), nameType::CYRILLIC) || ispunct(SYMBOL_(charIndex)))) { // TODO check going beyond boundaries
         memcpy(word, &(SYMBOL_(startIndex)), letterNumber + 1);
         word[letterNumber + 1] = '\0';
         
         FIND_KEYWORD_(word);
 
-        if (isCyrillic(&SYMBOL_(charIndex), tokenType::CYRILLIC)) {
+        if (isCyrillic(&SYMBOL_(charIndex), nameType::CYRILLIC)) {
             (*charIndex) += 2;
             letterNumber += 2;
         }
@@ -223,17 +223,17 @@ static tokenType getTokenType(Buffer<Keyword> *keywords, char *string, int *char
             letterNumber += 1;
         }
 
-        if (((isalpha(SYMBOL_(charIndex))     || isCyrillic(&(SYMBOL_(charIndex)),     tokenType::CYRILLIC)) && ispunct(SYMBOL_(charIndex - 1))) ||
-            ((isalpha(SYMBOL_(charIndex - 1)) || isCyrillic(&(SYMBOL_(charIndex - 1)), tokenType::CYRILLIC)) && ispunct(SYMBOL_(charIndex)))) {
+        if (((isalpha(SYMBOL_(charIndex))     || isCyrillic(&(SYMBOL_(charIndex)),     nameType::CYRILLIC)) && ispunct(SYMBOL_(charIndex - 1))) ||
+            ((isalpha(SYMBOL_(charIndex - 1)) || isCyrillic(&(SYMBOL_(charIndex - 1)), nameType::CYRILLIC)) && ispunct(SYMBOL_(charIndex)))) {
                 break;
             } // TODO
     }
 
-    return tokenType::NAME; // ?
+    return nameType::NAME; // ?
 }
 
 
-static int isCyrillic(char *string, tokenType type) {
+static int isCyrillic(char *string, nameType type) {
 	if ((*string & 0xe0) != 0xc0) {
 		return 0;
   	}
@@ -269,7 +269,7 @@ static parseError writeSyntaxError(char *string, int *lineIndex, int *charIndex)
 	return SYNTAX_ERROR;
 }
 
-static parseError createToken(Buffer<Token> *tokens, tokenValue value, char *string, int *lineIndex, int *charIndex, tokenType type) {
+static parseError createToken(Buffer<Token> *tokens, tokenValue value, char *string, int *lineIndex, int *charIndex, nameType type) {
     customWarning(tokens    != NULL,              TOKENS_BUFFER_BAD_POINTER);
 	customWarning(string    != NULL, (parseError) POINTER_IS_NULL);
 	customWarning(lineIndex != NULL, (parseError) POINTER_IS_NULL);
@@ -277,7 +277,7 @@ static parseError createToken(Buffer<Token> *tokens, tokenValue value, char *str
 
     tokens->data[tokens->capacity].type = type;
 
-    if (type == tokenType::NUMBER) {
+    if (type == nameType::NUMBER) {
         tokens->data[tokens->capacity].data.value = value.value;
     }
 

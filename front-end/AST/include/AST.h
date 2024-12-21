@@ -8,25 +8,25 @@
 
 enum class nodeType {
     CONSTANT             = 1,
-    STRING               = 2,
+    IDENTIFIER           = 2,
     KEYWORD              = 3,
-    FUNCTION_DEFENITION  = 4,
-    FUNCTION_ARGS        = 5,
-    FUNCTION_CALL        = 6,
-    VARIABLE_DECLARATION = 7
+    FUNCTION_DEFINITION  = 4,
+    PARAMETERS           = 5,
+    VARIABLE_DECLARATION = 6,
+    FUNCTION_CALL        = 7
 };
 
 union nodeData {
-    double            number = NAN;
-    size_t            nameTableID;
-    keywordIdentifier keywordID;
+    int number = POISON_VALUE;
+    int ID;
 };
 
 struct astNode {
-    nodeType type = nodeType::CONSTANT;
-    nodeData data = {.number = NAN};
-    int      line = 0;
-    char    *file = NULL;
+    nodeType type  = nodeType::CONSTANT;
+    nodeData data  = {.number = POISON_VALUE};
+    int      scope = -1;
+    int      line  = 0;
+    char    *file  = NULL;
 };
 
 node<astNode> *mountNode (node<astNode> currentNode);
