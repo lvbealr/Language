@@ -8,7 +8,6 @@
 #include "customWarning.h"
 
 // FUNCTION PROTOTYPES //
-template <> inline int         countLines<char>          (Buffer<char> *text);
             inline bufferError getLinePointerFromFile    (Buffer<char *>  *bufferStruct,  Buffer<char> *text);
 template <> inline bufferError bufferDestruct<char *>    (Buffer<char *>  *bufferStruct);
 // FUNCTION PROTOTYPES //
@@ -22,47 +21,33 @@ inline bufferError scanFileToBuffer<char>(Buffer<char> *bufferStruct, const char
     FILE *file = fopen(filename, "r");
     customWarning(file, FILE_OPEN_ERROR);
 
-    fread(bufferStruct->data, sizeof(char), (size_t) bufferStruct->size, file);
+    fread(bufferStruct->data, sizeof(char), (size_t) bufferStruct->capacity, file);
 
     fclose(file);
 
-    return NO_ERRORS;
-}
-
-template <>
-inline int countLines<char>(Buffer<char> *text) {
-    customWarning(text, POINTER_IS_NULL);
-
-    int linesNumber = 0;
-    for(int index = 0; index < text->size; index++) {
-        if(text->data[index] == '\n') {
-            linesNumber++;
-        }
-    }
-
-    return linesNumber;
+    return NO_BUFFER_ERROR;
 }
 
 template <>
 inline bufferError bufferDestruct<char>(Buffer<char> *bufferStruct) {
     customWarning(bufferStruct, POINTER_IS_NULL);
 
-    bufferStruct->size = 0;
+    bufferStruct->capacity = 0;
     free(bufferStruct->data);
     bufferStruct->data = NULL;
 
-    return NO_ERRORS;
+    return NO_BUFFER_ERROR;
 }
 
 template <>
 inline bufferError bufferDestruct<char *>(Buffer<char *> *bufferStruct) {
     customWarning(bufferStruct, POINTER_IS_NULL);
 
-    bufferStruct->size = 0;
+    bufferStruct->capacity = 0;
     free(bufferStruct->data);
     bufferStruct->data = NULL;
 
-    return NO_ERRORS;
+    return NO_BUFFER_ERROR;
 }
 
 #endif // BUFFER_EXTENSIONS_H_
