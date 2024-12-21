@@ -1,14 +1,16 @@
 CXX            = g++
 
-FRONT_SRC      = main.cpp lexer.cpp
+FRONT_SRC      = main.cpp lexer.cpp core.cpp RDP.cpp
+AST_SRC        = AST.cpp nameTable.cpp
 SUBMODULE_SRC  = colorPrint/colorPrint.cpp
 
 FRONT_DIR      = front-end/
 BUILD_DIR      = build/
 SRC_DIR        = src/
 INC_DIR        = include/
+AST_DIR        = AST/
 
-CFLAGS         = -I colorPrint/ -I customWarning -I myOnegin/ -I $(addprefix $(FRONT_DIR), $(INC_DIR)) -I Buffer/
+CFLAGS         = -I colorPrint/ -I customWarning -I myOnegin/ -I $(addprefix $(FRONT_DIR), $(INC_DIR)) -I Buffer/ -I binaryTree/ -I $(addprefix $(addprefix $(FRONT_DIR), $(AST_DIR)), $(INC_DIR)) -I $(FRONT_DIR) -I binaryTree/include
 
 FRONTEND       = frontend
 OBJECT         = $(patsubst %.cpp, %.o, $(SRC))
@@ -33,7 +35,7 @@ DED_FLAGS      = -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ -Waggres
 
 .PHONY: all
 
-frontend: $(addprefix $(addprefix $(FRONT_DIR), $(SRC_DIR)), $(FRONT_SRC))
+frontend: $(addprefix $(addprefix $(addprefix $(FRONT_DIR), $(SRC_DIR)), $(FRONT_SRC)) , $(addprefix $(addprefix $(FRONT_DIR), $(AST_DIR)), $(addprefix $(SRC_DIR), $(AST_SRC))))
 	clear
 	@mkdir -p $(addprefix $(FRONT_DIR), $(BUILD_DIR))
 	@$(CXX) $(CFLAGS) $^ $(SUBMODULE_SRC) -o $(addprefix $(addprefix $(FRONT_DIR), $(BUILD_DIR)), $(FRONTEND))
