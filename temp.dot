@@ -1,0 +1,8 @@
+digraph binaryTree {
+splines=ortho;
+rankdir=HR;
+nodesep=0.4;
+node [shape=record, fontname="JetBrains Mono", fontsize="10", color="gray", style="rounded"];
+edge [style=dashed, color="green", weight="10", penwidth="2", arrowsize="0.4"];
+p0x5e08d53592d0 [label = "{ <p> [0x5e08d53592d0] | <d> data = [0] | { <l> [(nil)] | <r> [(nil)] }}"];
+}
