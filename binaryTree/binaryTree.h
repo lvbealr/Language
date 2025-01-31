@@ -315,6 +315,26 @@ binaryTreeError binaryTreeSetInfo(binaryTree<DT> *tree) {
     return binaryTreeError::NO_ERRORS;
 }
 
+template<typename DT>
+node<DT> *emplaceNode(node<DT> currentNode) {
+    node<DT> *newNode = NULL;
+
+    nodeInitiailize(&newNode);
+    customWarning(newNode != NULL, NULL);
+
+    *newNode = currentNode;
+
+    if (newNode->left) {
+        newNode->left->parent = newNode;
+    }
+
+    if (newNode->right) {
+        newNode->right->parent = newNode;
+    }
+
+    return newNode;
+}
+
 #endif // BINARY_TREE_H_
 
 

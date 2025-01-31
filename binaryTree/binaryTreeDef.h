@@ -105,4 +105,7 @@ binaryTreeError binaryTreeInfoDestruct (binaryTree<DT> *tree);
 template<typename DT>
 binaryTreeError binaryTreeSetInfo      (binaryTree<DT> *tree);
 
+template<typename DT>
+node<DT>       *emplaceNode            (node<DT> currentNode);
+
 #endif // BINARY_TREE_DEF_H_

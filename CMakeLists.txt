@@ -3,6 +3,7 @@ project(PrisonLanguage)
 
 set(CMAKE_CXX_STANDARD 17)
 
+include_directories(Buffer)
 include_directories(colorPrint)
 include_directories(customWarning)
 include_directories(binaryTree)
