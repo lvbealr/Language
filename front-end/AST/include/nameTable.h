@@ -6,10 +6,10 @@
 #include "buffer.h"
 
 enum class nameType {
-    IDENTIFIER = 1,
-    OPERATOR   = 2,
-    TYPE_NAME  = 3,
-    SEPARATOR  = 4,
+    IDENTIFIER = 1 << 0,
+    OPERATOR   = 1 << 1,
+    TYPE_NAME  = 1 << 2,
+    SEPARATOR  = 1 << 3,
 };
 
 #define KEYWORD(NAME, NUMBER, ...) NAME = NUMBER,
@@ -29,8 +29,8 @@ struct nameTableElement {
 };
 
 enum class localNameType {
-    VARIABLE_IDENTIFIER = 1,
-    FUNCTION_IDENTIFIER = 2
+    VARIABLE_IDENTIFIER = 1 << 0,
+    FUNCTION_IDENTIFIER = 1 << 1
 };
 
 struct localNameTableElement {
@@ -44,13 +44,13 @@ struct localNameTable {
     Buffer<localNameTableElement> elements = {};
 };
 
-bufferError initializeNameTable    (Buffer<nameTableElement> *nameTable,       int   isGlobal);
+bufferError initializeNameTable    (Buffer<nameTableElement> *nameTable,       bool  isGlobal);
 bufferError addIdentifier          (Buffer<nameTableElement> *nameTable, const char *identifier);
 
 bufferError addLocalIdentifier     (int nameTableIndex, Buffer<localNameTable> *localTables, localNameTableElement newElement, size_t idSize);
 
 int         addLocalNameTable      (int nameTableID,    Buffer<localNameTable> *localTables);
-int         getIndexInLocalTable   (int nameTableIndex, Buffer<localNameTable> *localTables);
-int         getLocalNameTableIndex (int nameTableID,    Buffer<localNameTable> *localTables, size_t globalNameID, localNameType nameType);
+int         getIndexInLocalTable   (int nameTableIndex, Buffer<localNameTable> *localTables, size_t globalNameID, localNameType nameType);
+int         getLocalNameTableIndex (int nameTableID,    Buffer<localNameTable> *localTables);
 
 #endif // NAME_TABLE_H_
