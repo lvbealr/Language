@@ -1,12 +1,12 @@
 [submodule "Buffer"]
 	path = Buffer
 	url = git@github.com:lvbealr/Buffer.git
-[submodule "colorPrint"]
-	path = colorPrint
-	url = git@github.com:lvbealr/colorPrint.git
 [submodule "customWarning"]
 	path = customWarning
 	url = git@github.com:lvbealr/customWarning.git
 [submodule "simpleConsoleParser"]
 	path = simpleConsoleParser
 	url = git@github.com:lvbealr/simpleConsoleParser.git
+[submodule "colorPrint"]
+	path = colorPrint
+	url = git@github.com:lvbealr/colorPrint.git
