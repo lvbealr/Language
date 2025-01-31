@@ -9,6 +9,7 @@
 static const size_t POISON_VALUE = -666;
 
 enum class nodeType {
+    TERMINATOR           = 0
     CONSTANT             = 1,
     IDENTIFIER           = 2,
     KEYWORD              = 3,
@@ -38,7 +39,8 @@ struct astNode {
 #define VARIABLE_DECLARATION_(LEFT, RIGHT, ID_INDEX)
 #define PARAMETERS_(LEFT, RIGHT)
 #define FUNCTION_CALL_(LEFT, RIGHT)
-#define OPERATORS_SEPARATOR_(LEFT, RIGHT)
+#define TERMINATOR_()
+#define OPERATOR_SEPARATOR_(LEFT, RIGHT)
 #define PARAMETERS_SEPARATOR_(LEFT, RIGHT)
 
 #endif // AST_H_
