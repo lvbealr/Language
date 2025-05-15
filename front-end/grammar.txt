@@ -1,0 +1,48 @@
+Grammar ::= 'вор в законе' Identifier '.' TranslationUnit Terminator 
+TranslationUnit ::= ExternalDeclaration '.' {TranslationUnit}?
+
+ExternalDeclaration ::= FunctionDefinition | Declaration
+
+AssignmentExpression ::= Identifier 'сел по статье' Expression 
+Expression ::= Priority5
+
+Priority5 ::= Priority4 {['как и', 'или'] Priority4}* 
+Priority4 ::= Priority3 {['корефанится с', 'почти сосет у', 'почти петушит', 'петушит', 'сосет у', 'путает рамсы с'] Priority3}? 
+Priority3 ::= Priority2 {['плюс', 'минус'] Priority2}* 
+Priority2 ::= Priority1 {['помножить на', 'рассечь'] Priority1}* 
+Priority1 ::= ['синус', 'косинус', 'сквирт', 'опустить', 'не'] PrimaryExpression | PrimaryExpression
+
+PrimaryExpression ::= '(' Priority5 ')' | Diff | FunctionCall | Identifier | Constant | In
+
+If ::= 'если' Expression 'похер что' Operator 
+While ::= 'пока' Expression 'похер что' Operator 
+Return ::= 'мусорнулся' Expression 
+Break ::= 'шухер' 
+Continue ::= 'мою парашу' 
+Out ::= 'откинулся' Expression 
+In ::= 'зашел в хату' 
+Abort ::= 'посадили на перо'
+
+Statement ::= If | While | Abort | Out | Return | Break | Continue | FunctionCall | AssignmentExpression | Declaration 
+Operator ::= Statement | 'пошел раскумар' OperatorList 'торкнуло' 
+OperatorList ::= Operator {'.' Operator}?
+
+Declaration ::= TypeSpecifier InitializerDeclarator 
+TypeSpecifier ::= 'фраер' 
+InitializerDeclarator ::= AssignmentExpression | Identifier
+
+FunctionDefinition ::= 'блатной' TypeSpecifier Identifier '(' ParameterList ')' 'пошел раскумар' OperatorList 'торкнуло' 
+FunctionCall ::= 'блатной' Identifier '(' ArgumentList ')'
+
+ArgumentList ::= Expression {',' Expression}? 
+ParameterList ::= Declaration {',' Declaration}?
+
+Diff ::= 'штрих' '(' Identifier ',' DiffPriority3 ')' 
+
+DiffPriority3 ::= DiffPriority2 {['плюс', 'минус'] DiffPriority2}* 
+DiffPriority2 ::= DiffPriority1 {['помножить на', 'рассечь'] DiffPriority1}* 
+DiffPriority1 ::= ['синус', 'косинус'] PrimaryExpression | PrimaryExpression
+
+Identifier ::= [a-zA-Z_]+[0-9A-Za-z_]* 
+Constant ::= [0-9]+ 
+Terminator ::= 'закончил базар'
