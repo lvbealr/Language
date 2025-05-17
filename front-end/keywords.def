@@ -37,9 +37,12 @@ KEYWORD (BREAK,                72, "шухер",            nameType::OPERATOR)
 KEYWORD (CONTINUE,             73, "мою парашу",       nameType::OPERATOR)
 KEYWORD (ABORT,                74, "посадили на перо", nameType::OPERATOR)
 
+KEYWORD (FUNCTION_DEFINITION,  81, "блатной",          nameType::OPERATOR)
+
 KEYWORD (LEFT_BRACKET,         82, "(",                nameType::SEPARATOR)
 KEYWORD (RIGHT_BRACKET,        83, ")",                nameType::SEPARATOR)
 KEYWORD (BLOCK_OPEN,           84, "пошел раскумар",   nameType::SEPARATOR)
 KEYWORD (BLOCK_CLOSE,          85, "торкнуло",         nameType::SEPARATOR)
+KEYWORD (CONDITION_SEPARATOR,  86, "тормоз",           nameType::SEPARATOR)
 KEYWORD (INITIAL_OPERATOR,     87, "вор в законе",     nameType::SEPARATOR)
-KEYWORD (FUNCTION_CALL,        88, "блатной",          nameType::SEPARATOR)
+KEYWORD (FUNCTION_CALL,        88, "работает",         nameType::SEPARATOR)
