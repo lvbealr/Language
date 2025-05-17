@@ -132,21 +132,21 @@ inline binaryTreeError nodeLink(binaryTree<DT> *tree, node<DT> *currentNode, lin
 }
 
 template<typename DT>
-inline binaryTreeError nodeDestruct(binaryTree<DT> *tree, node<DT> **currentNode) {
+inline binaryTreeError nodeDestruct(binaryTree<DT> *tree, node<DT> **node) {
     customWarning(tree         != NULL, binaryTreeError::TREE_NULL_POINTER);
-    customWarning(*currentNode != NULL, binaryTreeError::NODE_NULL_POINTER);
+    customWarning(*node != NULL, binaryTreeError::NODE_NULL_POINTER);
 
-    if ((*currentNode)->left) {
-        nodeDestruct(tree, &((*currentNode)->left));
+    if ((*node)->left) {
+        nodeDestruct(tree, &((*node)->left));
     }
 
-    if ((*currentNode)->right) {
-        nodeDestruct(tree, &((*currentNode)->right));
+    if ((*node)->right) {
+        nodeDestruct(tree, &((*node)->right));
     }
 
     DUMP_(tree);
 
-    FREE_(*currentNode);
+    FREE_(*node);
 
     return binaryTreeError::NO_ERRORS;
 }
@@ -316,7 +316,7 @@ binaryTreeError binaryTreeSetInfo(binaryTree<DT> *tree) {
 }
 
 template<typename DT>
-node<DT> *emplaceNode(node<DT> currentNode) {
+node<DT> *emplaceNode(node<DT> *currentNode) {
     node<DT> *newNode = NULL;
 
     nodeInitiailize(&newNode);

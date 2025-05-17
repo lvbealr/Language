@@ -5,10 +5,10 @@
 #include <cstdlib>
 #include <cinttypes>
 
-#define FREE_(ptr) { \
-    free(ptr);       \
-    ptr = NULL;      \
-}
+#define FREE_(ptr) do { \
+    free(ptr);          \
+    ptr = NULL;         \
+} while (0)
 
 struct binaryTreeInfo {
     char *bornFileName         = {};
