@@ -8,14 +8,18 @@
 #include "nameTable.h"
 #include "AST.h"
 
-#define currentSymbol context->fileContext[*currentIndex]
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
+
+#define currentSymbol context->fileContent[*currentIndex]
 
 #define ADD_TOKEN(NODE) do {                                                                    \
     node<astNode> *newToken = NODE;                                                             \
-    if (writeDataToBuffer(&context->tokens, &newToken, 1) != bufferError::NO_BUFFER_ERROR) {    \
+    if (writeDataToBuffer(context->tokens, &newToken, 1) != bufferError::NO_BUFFER_ERROR) {     \
         return compilationError::TOKEN_BUFFER_ERROR;                                            \
     }                                                                                           \
 } while (0)
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 static compilationError tokenizeNumber   (compilationContext *context, size_t *currentIndex);
 static compilationError tokenizeWord     (compilationContext *context, size_t *currentIndex);
@@ -34,6 +38,8 @@ static size_t             getMaxWordLength   (symbolGroup group);
 static bool   isCyrillic      (const char *multiByteSymbol);
 static size_t getMaxWordLength(char byte);
 
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
+
 compilationError lexicalAnalysis(compilationContext *context) {
     customWarning(context != NULL, compilationError::CONTEXT_ERROR);
 
@@ -41,17 +47,17 @@ compilationError lexicalAnalysis(compilationContext *context) {
 
     setlocale(LC_ALL, "en_US.utf8");
 
-    while (currentIndex < context->fileLength) {
+    while (currentIndex < context->fileSize) {
         if (context->fileContent[currentIndex] == '\n') {
             context->currentLine++;
         }
 
         if (isspace(context->fileContent[currentIndex])) {
             currentIndex++;
-            continue
+            continue;
         }
 
-        if (isdigit(context->fileContext[currentIndex])) {
+        if (isdigit(context->fileContent[currentIndex])) {
             tokenizeNumber(context, &currentIndex);
         }
 
@@ -60,9 +66,9 @@ compilationError lexicalAnalysis(compilationContext *context) {
         }
     }
 
-    ADD_TOKEN(Terminator());
+    ADD_TOKEN(_TERMINATOR_()); // ?
 
-    return compilationError:NO_ERRORS;
+    return compilationError::NO_ERRORS;
 }
 
 static compilationError tokenizeNumber(compilationContext *context, size_t *currentIndex) {
@@ -72,8 +78,8 @@ static compilationError tokenizeNumber(compilationContext *context, size_t *curr
     int number       = NAN;
     int numberLength = 0;
 
-    if (sscanf(&currentSymbol, "%lu%n", &number, &numberLength) > 0) {
-        node<astNode> *constToken = CONST_(number);
+    if (sscanf(&currentSymbol, "%d%n", &number, &numberLength) > 0) {
+        node<astNode> *constToken = _CONST_(number);
         constToken->data.line = context->currentLine;
 
         ADD_TOKEN(constToken);
@@ -135,11 +141,11 @@ static compilationError tokenizeNewIdentifier(compilationContext *context, size_
     char *newIdentifier = (char *)calloc(length + 1, sizeof(char));
     memcpy(newIdentifier, &currentSymbol, length);
 
-    if (addIdentifier(&context->nameTable, newIdentifier) != bufferError::NO_BUFFER_ERROR) {
+    if (addIdentifier(context->nameTable, newIdentifier) != bufferError::NO_BUFFER_ERROR) {
         return compilationError::CONTEXT_ERROR;
     }
 
-    node<astNode> *identifierToken = NAME_(context->nameTable.currentIndex - 1);
+    node<astNode> *identifierToken = _NAME_(context->nameTable->currentIndex - 1);
     identifierToken->data.line = context->currentLine;
 
     ADD_TOKEN(identifierToken);
@@ -153,20 +159,20 @@ static compilationError tokenizeExistingIdentifier(compilationContext *context, 
     customWarning(context      != NULL, compilationError::CONTEXT_ERROR);
     customWarning(currentIndex != NULL, compilationError::CONTEXT_ERROR);
 
-    node<astNode> *identifierToken = NAME_(nameIndex);
+    node<astNode> *identifierToken = _NAME_(nameIndex);
     identifierToken->data.line = context->currentLine;
 
     ADD_TOKEN(identifierToken);
 
     (*currentIndex) += length;
 
-    return compilationError:NO_ERRORS;
+    return compilationError::NO_ERRORS;
 }
 
 static size_t getNextWordLength(compilationContext *context, size_t currentIndex) {
     customWarning(context != NULL, -1); // TODO
 
-    if (currentIndex > context->fileLength || context->fileContent[currentIndex] == '\n') {
+    if (currentIndex > context->fileSize || context->fileContent[currentIndex] == '\n') {
         return 0;
     }
 
@@ -184,7 +190,7 @@ static size_t getNextWordLength(compilationContext *context, size_t currentIndex
 
                 length++;
 
-                if (currentIndex + length < context->fileLength) {
+                if (currentIndex + length < context->fileSize) {
                     currentGroup = getSymbolGroup(context, currentIndex + length);
                 }
 
@@ -197,14 +203,14 @@ static size_t getNextWordLength(compilationContext *context, size_t currentIndex
 }
 
 static stringIntersection findMaxIntersection(compilationContext *context, const char *word, size_t wordLength, size_t *foundNameIndex) {
-    customWarning(context        != NULL, compilationError::CONTEXT_ERROR);
-    customWarning(word           != NULL, compilationError::CONTEXT_ERROR);
-    customWarning(foundNameIndex != NULL, compilationError::CONTEXT_ERROR);
+    // customWarning(context,        compilationError::CONTEXT_ERROR); // TODO
+    // customWarning(word,           compilationError::CONTEXT_ERROR); // TODO
+    // customWarning(foundNameIndex, compilationError::CONTEXT_ERROR); // TODO
 
     stringIntersection maxIntersection = stringIntersection::NO_MATCH;
 
-    for (size_t nameIndex = 0; nameIndex < context->nameTable.currentIndex; nameIndex++) {
-        stringIntersection currentIntersection = checkWordIntersection(word, context->nameTable.data[nameIndex].name, wordLength);
+    for (size_t nameIndex = 0; nameIndex < context->nameTable->currentIndex; nameIndex++) {
+        stringIntersection currentIntersection = checkWordIntersection(word, context->nameTable->data[nameIndex].name, wordLength);
 
         if (currentIntersection == stringIntersection::FULL_MATCH) {
             *foundNameIndex = nameIndex;
@@ -221,8 +227,8 @@ static stringIntersection findMaxIntersection(compilationContext *context, const
 }
 
 static stringIntersection checkWordIntersection(const char *word, const char *pattern, size_t wordLength) {
-    customWarning(word    != NULL, stringIntersection::NO_MATCH); // TODO
-    customWarning(pattern != NULL, stringIntersection::NO_MATCH); // TODO
+    customWarning(word,    stringIntersection::NO_MATCH); // TODO
+    customWarning(pattern, stringIntersection::NO_MATCH); // TODO
 
     for (size_t symbol = 0; symbol < wordLength; symbol++) {
         if (pattern[symbol] == '\0') {
@@ -279,7 +285,7 @@ static symbolGroup getPermittedSymbols(symbolGroup group) {
         case symbolGroup::UNDERSCORE:
             {
                 return (symbolGroup) ((int)symbolGroup::ENGLISH | (int)symbolGroup::CYRILLIC |
-                                      (int)symbolGroup::DIGIT | (int)symbolGroup::UNDERSCORE);
+                                      (int)symbolGroup::DIGIT   | (int)symbolGroup::UNDERSCORE);
             }
 
         default:
@@ -290,7 +296,7 @@ static symbolGroup getPermittedSymbols(symbolGroup group) {
 }
 
 static symbolGroup getSymbolGroup(compilationContext *context, size_t symbolIndex) {
-    customWarning(context != NULL, symbolGroup::INVALID); // TODO
+    // customWarning(context, symbolGroup::INVALID); // TODO
 
     char symbol = context->fileContent[symbolIndex];
 
@@ -311,7 +317,7 @@ static symbolGroup getSymbolGroup(compilationContext *context, size_t symbolInde
     else if (symbol == '+' || symbol == '-' ||
              symbol == '*' || symbol == '/' ||
              symbol == '=' || symbol == '!' ||
-             symbol == '<' || symbol == '>' ||) {
+             symbol == '<' || symbol == '>') {
                 return symbolGroup::OPERATION;
              }
     
@@ -336,6 +342,10 @@ static symbolGroup getSymbolGroup(compilationContext *context, size_t symbolInde
     }
 }
 
+static bool isCyrillicSecondByte(char byte) {
+    return (byte >= 0x10 && byte <= 0x4f) || byte == 0x51 || byte == 0x01; // unicode table
+}
+
 static bool isCyrillic(const char *multiByteSymbol) {
     customWarning(multiByteSymbol != NULL, false);
 
@@ -349,8 +359,4 @@ static bool isCyrillic(const char *multiByteSymbol) {
     }
 
     return false;
-}
-
-static bool isCyrillicSecondByte(char byte) {
-    return (byte >= 0x10 && byte <= 0x4f) || byte == 0x51 || byte == 0x01; // unicode table
 }
