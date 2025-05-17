@@ -5,7 +5,7 @@
 #include "buffer.h"
 #include "AST.h"
 
-enum class CompilationError: long long int {
+enum class compilationError: long long int {
     NO_ERRORS                    = 0,
     CONTEXT_ERROR                = 1 << 0,
     TOKEN_BUFFER_ERROR           = 1 << 1,
@@ -47,31 +47,35 @@ struct errorData {
 };
 
 struct compilationContext {
-    Buffer<nameTableElement> nameTable   = {};
-    Buffer<localNameTable>   localTables = {};
-    Buffer<node<astNode> *>  tokens      = {};
+    Buffer<nameTableElement> *nameTable   = {};
+    Buffer<localNameTable>   *localTables = {};
+    Buffer<node<astNode> *>  *tokens      = {};
 
     size_t tokenIndex  = 0;
 
     int    currentLine = 0;
 
-    compilationError  error       = compilationError::NO_ERRORS;
-    Buffer<errorData> errorBuffer = {};
+    compilationError   error       = compilationError::NO_ERRORS;
+    Buffer<errorData> *errorBuffer = {};
 
-    node<astNode> AST = {};
+    binaryTree<astNode> *AST = {};
 
     char  *fileContent = NULL;
     size_t fileSize    = 0;
 
     size_t entryPoint  = 0; // IR?
 
-    Buffer<node<astNode> *> functionCalls = {}; // IR?
+    Buffer<node<astNode> *> *functionCalls = {}; // IR?
 };
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 compilationError compilationContextInitialize(compilationContext *context, char *fileContent);
 compilationError compilationContextDestruct  (compilationContext *context);
 
 compilationError dumpTokenTable(compilationContext *context);
 compilationError dumpToken     (compilationContext *context, node<astNode> *token);
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 #endif // CORE_H_
