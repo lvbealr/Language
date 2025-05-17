@@ -34,7 +34,7 @@ enum class localNameType {
 };
 
 struct localNameTableElement {
-    localNameType type         = VARIABLE_IDENTIFIER;
+    localNameType type         = localNameType::VARIABLE_IDENTIFIER;
     size_t        globalNameID = 0;
 };
 
@@ -44,13 +44,17 @@ struct localNameTable {
     Buffer<localNameTableElement> elements = {};
 };
 
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
+
 bufferError initializeNameTable    (Buffer<nameTableElement> *nameTable,       bool  isGlobal);
 bufferError addIdentifier          (Buffer<nameTableElement> *nameTable, const char *identifier);
 
 bufferError addLocalIdentifier     (int nameTableIndex, Buffer<localNameTable> *localTables, localNameTableElement newElement, size_t idSize);
 
-int         addLocalNameTable      (int nameTableID,    Buffer<localNameTable> *localTables);
-int         getIndexInLocalTable   (int nameTableIndex, Buffer<localNameTable> *localTables, size_t globalNameID, localNameType nameType);
-int         getLocalNameTableIndex (int nameTableID,    Buffer<localNameTable> *localTables);
+int addLocalNameTable     (int nameTableID,    Buffer<localNameTable> *localTables);
+int getIndexInLocalTable  (int nameTableIndex, Buffer<localNameTable> *localTables, size_t globalNameID, localNameType nameType);
+int getLocalNameTableIndex(int nameTableID,    Buffer<localNameTable> *localTables);
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 #endif // NAME_TABLE_H_

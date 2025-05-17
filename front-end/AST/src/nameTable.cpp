@@ -3,7 +3,7 @@
 #include "buffer.h"
 
 bufferError initializeNameTable(Buffer<nameTableElement> *nameTable, int isGlobal) {
-    customWarning(nameTable != NULL, bufferError::POINTER_IS_NULL);
+    customWarning(nameTable, bufferError::POINTER_IS_NULL);
 
     if (bufferInitialize(nameTable) != bufferError::NO_BUFFER_ERROR) {
         return bufferError::CALLOC_ERROR;
@@ -12,9 +12,9 @@ bufferError initializeNameTable(Buffer<nameTableElement> *nameTable, int isGloba
     if (isGlobal) {
         #define KEYWORD(NAME, NUMBER, KEYWORD, TYPE, ...) {                                                         \
             nameTableElement newElement = {.name = KEYWORD, .type = TYPE, .keyword = static_cast<Keyword>(NUMBER)}; \
-            if (writeDataToBuffer(nameTable, &newRecord, 1) != bufferError::NO_BUFFER_ERROR) {                      \
+            if (writeDataToBuffer(nameTable, &element, 1) != bufferError::NO_BUFFER_ERROR) {                        \
                 return bufferError::BUFFER_ENDED;                                                                   \
-            }
+            }                                                                                                       \
         }
 
         #include "keywords.def"
@@ -26,16 +26,15 @@ bufferError initializeNameTable(Buffer<nameTableElement> *nameTable, int isGloba
 }
 
 bufferError addIdentifier(Buffer<nameTableElement> *nameTable, const char *identifier) {
-    customWarning(nameTableIdentifier != NULL, bufferError::POINTER_IS_NULL);
-    customWarning(identifier          != NULL, bufferError::POINTER_IS_NULL);
+    customWarning(identifier, bufferError::POINTER_IS_NULL);
 
-    nameTableElement newElement = {.name = identifier, .type = nameType::IDENTIFIER, .keyword = Keyword::UNDEFINED};
+    nameTableElement newElement = {.name = (char *)identifier, .type = nameType::IDENTIFIER, .keyword = Keyword::UNDEFINED};
 
     return writeDataToBuffer(nameTable, &newElement, 1);
 }
 
 bufferError addLocalIdentifier(int nameTableIndex, Buffer<localNameTable> *localTables, localNameTableElement newElement, size_t idSize) {
-    customWarning(localTables != NULL, bufferError::POINTER_IS_NULL);
+    customWarning(localTables, bufferError::POINTER_IS_NULL);
 
     if (localTables->currentIndex >= nameTableIndex && nameTableIndex < 0) {
         return bufferError::NO_BUFFER;
@@ -47,7 +46,7 @@ bufferError addLocalIdentifier(int nameTableIndex, Buffer<localNameTable> *local
 }
 
 int addLocalNameTable(int nameTableID, Buffer<localNameTable> *localTables) {
-    customWarning(localTables != NULL, bufferError::POINTER_IS_NULL);
+    customWarning(localTables, bufferError::POINTER_IS_NULL);
 
     localNameTable newLocalTable = {.nameTableID = nameTableID, .size = 0, .elements = {}};
 
@@ -55,13 +54,13 @@ int addLocalNameTable(int nameTableID, Buffer<localNameTable> *localTables) {
         return -1;
     }
 
-    writeDataToBuffer(localTables, &newTable, 1);
+    writeDataToBuffer(localTables, &newLocalTable, 1);
 
     return localTables->currentIndex - 1;
 }
 
-int getIndexInLocalTable(int nameTableIndex, size_t globalNameID, Buffer<localNameTable> *localTables, size_t globalNameID, localNameType nameType) {
-    customWarning(localTables != NULL, bufferError::POINTER_IS_NULL);
+int getIndexInLocalTable(int nameTableIndex, Buffer<localNameTable> *localTables, size_t globalNameID, localNameType nameType) {
+    customWarning(localTables, bufferError::POINTER_IS_NULL);
 
     if (localTables->currentIndex >= nameTableIndex && nameTableIndex < 0) {
         return -1;
@@ -69,7 +68,7 @@ int getIndexInLocalTable(int nameTableIndex, size_t globalNameID, Buffer<localNa
 
     for (size_t nameIndex = 0; nameIndex < localTables->data[nameTableIndex].elements.currentIndex; nameIndex++) {
         if (localTables->data[nameTableIndex].elements.data[nameIndex].globalNameID == globalNameID &&
-           ((int)localTable->data[nameTableIndex].elements.data[nameIndex].nameType & (int)nameType)) {
+           ((int)localTables->data[nameTableIndex].elements.data[nameIndex].type & (int)nameType)) {
             
             return nameIndex;
             
@@ -80,7 +79,7 @@ int getIndexInLocalTable(int nameTableIndex, size_t globalNameID, Buffer<localNa
 }    
 
 int getLocalNameTableIndex(int nameTableID, Buffer<localNameTable> *localTables) {
-    customWarning(localTables != NULL, bufferError::POINTER_IS_NULL);
+    customWarning(localTables, bufferError::POINTER_IS_NULL);
 
     for (size_t tableIndex = 0; tableIndex < localTables->currentIndex; tableIndex++) {
         if (localTables->data[tableIndex].nameTableID == nameTableID) {
