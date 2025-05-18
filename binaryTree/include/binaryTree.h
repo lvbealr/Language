@@ -11,7 +11,7 @@
 #include "binaryTreeDef.h"
 #include "customWarning.h"
 #include "binaryTreeDump.h"
-#include "consoleParser.h"
+// #include "consoleParser.h"
 
 #ifndef _NDEBUG
     #define DUMP_(treePtr) {                                                                       \
@@ -144,7 +144,7 @@ inline binaryTreeError nodeDestruct(binaryTree<DT> *tree, node<DT> **node) {
         nodeDestruct(tree, &((*node)->right));
     }
 
-    DUMP_(tree);
+    // DUMP_(tree);
 
     FREE_(*node);
 
@@ -244,7 +244,7 @@ inline binaryTreeError treeInfoInitialize(binaryTree<DT> *tree, const char *file
     strncpy(tree->infoData->bornFileName,     fileName, MAX_FILE_NAME_SIZE);
     strncpy(tree->infoData->bornFunctionName, funcName, MAX_BORN_FUNC_NAME);
 
-    binaryTreeSetInfo(tree);
+    // binaryTreeSetInfo(tree);
 
     DUMP_(tree);
 
@@ -272,54 +272,54 @@ inline binaryTreeError binaryTreeInfoDestruct(binaryTree<DT> *tree) {
     return binaryTreeError::NO_ERRORS;
 }
 
+// template<typename DT>
+// binaryTreeError setDumpFileName(binaryTree<DT> *tree) {
+//     const time_t currentTime = time(NULL);
+//     tm localTime             = *localtime(&currentTime);
+
+//     char *fileName = (char *)calloc(MAX_FILE_NAME_SIZE, sizeof(char));
+
+//     customWarning(fileName != NULL, binaryTreeError::CALLOC_ERROR);
+
+//     snprintf(fileName, FILENAME_MAX, "%s/%.2d.%.2d.%.4d-%.2d:%.2d:%.2d.html",
+//              __OPTIONS_DATA__.dumpFolderName, localTime.tm_mday, localTime.tm_mon,
+//              localTime.tm_year + 1900,        localTime.tm_hour, localTime.tm_min, localTime.tm_sec);
+
+//     strncpy(tree->infoData->htmlDumpPath, fileName, MAX_DUMP_FILE_NAME);
+
+//     FREE_(fileName);
+
+//     return binaryTreeError::NO_ERRORS;
+// }
+
+// template<typename DT>
+// binaryTreeError binaryTreeSetInfo(binaryTree<DT> *tree) {
+//     customWarning(tree != NULL, binaryTreeError::TREE_NULL_POINTER);
+
+//     char *buffer = (char *)calloc(MAX_CMD_BUFFER_SIZE, sizeof(char));
+//     customWarning(buffer != NULL, binaryTreeError::BAD_BUFFER_POINTER);
+
+//     snprintf(buffer, MAX_CMD_BUFFER_SIZE, "mkdir -p %s", __OPTIONS_DATA__.dumpFolderName);
+
+//     system(buffer);
+
+//     *buffer = {};
+
+//     // setDumpFileName(tree);
+
+//     snprintf(buffer, MAX_CMD_BUFFER_SIZE, "touch %s", tree->infoData->htmlDumpPath);
+//     system(buffer);
+
+//     FREE_(buffer);
+
+//     return binaryTreeError::NO_ERRORS;
+// }
+
 template<typename DT>
-binaryTreeError setDumpFileName(binaryTree<DT> *tree) {
-    const time_t currentTime = time(NULL);
-    tm localTime             = *localtime(&currentTime);
-
-    char *fileName = (char *)calloc(MAX_FILE_NAME_SIZE, sizeof(char));
-
-    customWarning(fileName != NULL, binaryTreeError::CALLOC_ERROR);
-
-    snprintf(fileName, FILENAME_MAX, "%s/%.2d.%.2d.%.4d-%.2d:%.2d:%.2d.html",
-             __OPTIONS_DATA__.dumpFolderName, localTime.tm_mday, localTime.tm_mon,
-             localTime.tm_year + 1900,        localTime.tm_hour, localTime.tm_min, localTime.tm_sec);
-
-    strncpy(tree->infoData->htmlDumpPath, fileName, MAX_DUMP_FILE_NAME);
-
-    FREE_(fileName);
-
-    return binaryTreeError::NO_ERRORS;
-}
-
-template<typename DT>
-binaryTreeError binaryTreeSetInfo(binaryTree<DT> *tree) {
-    customWarning(tree != NULL, binaryTreeError::TREE_NULL_POINTER);
-
-    char *buffer = (char *)calloc(MAX_CMD_BUFFER_SIZE, sizeof(char));
-    customWarning(buffer != NULL, binaryTreeError::BAD_BUFFER_POINTER);
-
-    snprintf(buffer, MAX_CMD_BUFFER_SIZE, "mkdir -p %s", __OPTIONS_DATA__.dumpFolderName);
-
-    system(buffer);
-
-    *buffer = {};
-
-    setDumpFileName(tree);
-
-    snprintf(buffer, MAX_CMD_BUFFER_SIZE, "touch %s", tree->infoData->htmlDumpPath);
-    system(buffer);
-
-    FREE_(buffer);
-
-    return binaryTreeError::NO_ERRORS;
-}
-
-template<typename DT>
-node<DT> *emplaceNode(node<DT> *currentNode) {
+node<DT> *emplaceNode(node<DT> currentNode) {
     node<DT> *newNode = NULL;
 
-    nodeInitiailize(&newNode);
+    nodeInitialize(&newNode);
     customWarning(newNode != NULL, NULL);
 
     *newNode = currentNode;
