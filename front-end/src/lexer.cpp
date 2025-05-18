@@ -1,12 +1,14 @@
 #include <cctype>
 #include <climits>
 #include <clocale>
+#include <cstdio>
 
 #include "lexer.h"
 #include "buffer.h"
 #include "core.h"
 #include "nameTable.h"
 #include "AST.h"
+#include "binaryTreeDef.h"
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
@@ -46,6 +48,7 @@ compilationError lexicalAnalysis(compilationContext *context) {
     size_t currentIndex = 0;
 
     setlocale(LC_ALL, "en_US.utf8");
+    setlocale(LC_ALL, "ru_RU.utf8");
 
     while (currentIndex < context->fileSize) {
         if (context->fileContent[currentIndex] == '\n') {
@@ -122,7 +125,7 @@ static compilationError tokenizeWord(compilationContext *context, size_t *curren
             case stringIntersection::NO_MATCH: {
                 return tokenizeNewIdentifier(context, currentIndex, initialWordLength);
             }
-
+            
             case stringIntersection::FULL_MATCH: {
                 return tokenizeExistingIdentifier(context, currentIndex, wordLength, foundNameIndex);
             }
@@ -170,7 +173,7 @@ static compilationError tokenizeExistingIdentifier(compilationContext *context, 
 }
 
 static size_t getNextWordLength(compilationContext *context, size_t currentIndex) {
-    customWarning(context != NULL, -1); // TODO
+    customWarning(context, -1); // TODO
 
     if (currentIndex > context->fileSize || context->fileContent[currentIndex] == '\n') {
         return 0;
@@ -329,7 +332,7 @@ static symbolGroup getSymbolGroup(compilationContext *context, size_t symbolInde
         return symbolGroup::UNDERSCORE;
     }
 
-    else if (symbol == '.' || symbol == ',') {
+    else if (symbol == ';' || symbol == ',') {
         return symbolGroup::SEPARATOR;
     }
 

@@ -8,9 +8,10 @@
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
-#define COPY_STRING(DESTINATION, SOURCE, SIZE) { \
-    strncpy(DESTINATION, SOURCE, SIZE);          \
-    (DESTINATION)[SIZE] = '\0';                  \
+#define COPY_STRING(DESTINATION, SOURCE, SIZE) {          \
+    DESTINATION = (char *)calloc(SIZE + 1, sizeof(char)); \
+    strncpy(DESTINATION, SOURCE, SIZE);                   \
+    (DESTINATION)[SIZE] = '\0';                           \
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -63,6 +64,20 @@ char *getASTFileName(binaryTree<astNode> *tree) {
     return fileName;
 }
 
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
+
+#define SET_DOT_HEADER(DUMP_CONTEXT) do {                          \
+    fprintf((DUMP_CONTEXT)->file, "digraph AST {\n");              \
+    fprintf((DUMP_CONTEXT)->file, "node [shape = \"record\"];\n"); \
+    fprintf((DUMP_CONTEXT)->file, "rankdir = \"TB\";\n");          \
+} while (0)
+
+#define SET_DOT_FOOTER(DUMP_CONTEXT) do {  \
+    fprintf((DUMP_CONTEXT)->file, "}\n");  \
+} while (0)
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
+
 dumpError dumpTree(compilationContext *context, dumpContext *dumpContext, binaryTree<astNode> *tree) {
     customWarning(context,     dumpError::CONTEXT_BAD_POINTER);
     customWarning(dumpContext, dumpError::DUMP_CONTEXT_BAD_POINTER);
@@ -77,6 +92,8 @@ dumpError dumpTree(compilationContext *context, dumpContext *dumpContext, binary
     node<astNode> *root = tree->root;
     customWarning(root, dumpError::NODE_BAD_POINTER);
 
+    SET_DOT_HEADER(dumpContext);
+
     if (root->left) {
         dumpNode(context, dumpContext, root->left);
     }
@@ -86,6 +103,8 @@ dumpError dumpTree(compilationContext *context, dumpContext *dumpContext, binary
     }
 
     FREE_(fileName);
+
+    SET_DOT_FOOTER(dumpContext);
 
     return dumpError::NO_ERRORS;
 }
@@ -110,66 +129,67 @@ static int findIdentifierInLocalTable(compilationContext *context, node<astNode>
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
-#define SET_DOT_HEADER(DUMP_CONTEXT) do {                          \
-    fprintf((DUMP_CONTEXT)->file, "digraph AST {\n");              \
-    fprintf((DUMP_CONTEXT)->file, "node [shape = \"record\"];\n"); \
-    fprintf((DUMP_CONTEXT)->file, "rankdir = \"LR\";\n");          \
-} while (0)
-
-#define SET_DOT_FOOTER(DUMP_CONTEXT) do {  \
-    fprintf((DUMP_CONTEXT)->file, "}\n");  \
-} while (0)
-
-#define SET_LINKS(DUMP_CONTEXT, NODE) do {                                     \
-    fprintf((DUMP_CONTEXT)->file, "p%p:<l> -> p%p;\n", (NODE), (NODE)->left);  \
-    fprintf((DUMP_CONTEXT)->file, "p%p:<r> -> p%p;\n", (NODE), (NODE)->right); \
+#define SET_LINKS(DUMP_CONTEXT, NODE) do {                                         \
+    if ((NODE)->left) {                                                            \
+        fprintf((DUMP_CONTEXT)->file, "p%p:<l> -> p%p;\n", (NODE), (NODE)->left);  \
+    }                                                                              \
+    if ((NODE)->right) {                                                           \
+        fprintf((DUMP_CONTEXT)->file, "p%p:<l> -> p%p;\n", (NODE), (NODE)->right); \
+    }                                                                              \
 } while (0)
 
 #define DUMP_TERMINATOR(CONTEXT, DUMP_CONTEXT, NODE) do {                   \
     fprintf((DUMP_CONTEXT)->file,                                           \
-    "p%p [label = \" TERMINATOR | { %p | %p } \"];\n",                      \
+    "p%p [label = \" { TERMINATOR | { %p | %p } } \","                      \
+    "style=\"filled\", fillcolor=\"lightgrey\", width=2.0];\n",             \
     (NODE), (NODE)->left, (NODE)->right);                                   \
     SET_LINKS(DUMP_CONTEXT, NODE);                                          \
 } while (0)
 
 #define DUMP_CONSTANT(CONTEXT, DUMP_CONTEXT, NODE) do {                     \
     fprintf((DUMP_CONTEXT)->file,                                           \
-    "p%p [label = \" CONSTANT: %d | { %p | %p } \"];\n",                    \
+    "p%p [label = \" { CONSTANT: %d | { %p | %p } } \","                    \
+    "style=\"filled\", fillcolor=\"lightblue\", width=2.0];\n",             \
     (NODE), (NODE)->data.data.number, (NODE)->left, (NODE)->right);         \
     SET_LINKS(DUMP_CONTEXT, NODE);                                          \
 } while (0)
 
 #define DUMP_STRING(CONTEXT, DUMP_CONTEXT, NODE, NAME, TYPE) do {           \
     fprintf((DUMP_CONTEXT)->file,                                           \
-    "p%p [label = \" %s: %s | { %p | %p } \"];\n",                          \
+    "p%p [label = \" { %s:\\n%s | { %p | %p } } \","                        \
+    "style=\"filled\", fillcolor=\"lightgreen\", width=2.0];\n",            \
     (NODE), #TYPE, NAME, (NODE)->left, (NODE)->right);                      \
     SET_LINKS(DUMP_CONTEXT, NODE);                                          \
 } while (0)
 
 #define DUMP_FUNCTION_DEFINITION(CONTEXT, DUMP_CONTEXT, NODE, NAME) do {    \
     fprintf((DUMP_CONTEXT)->file,                                           \
-    "p%p [label = \" FUNCTION: %s | { %p | %p } \"];\n",                    \
+    "p%p [label = \" { FUNCTION: %s | { %p | %p } } \","                    \
+    "style=\"filled\", fillcolor=\"yellow\", width=2.0];\n",                \
     (NODE), (NAME), (NODE)->left, (NODE)->right);                           \
     SET_LINKS(DUMP_CONTEXT, NODE);                                          \
 } while (0)
 
 #define DUMP_PARAMETERS(CONTEXT, DUMP_CONTEXT, NODE) do {                   \
     fprintf((DUMP_CONTEXT)->file,                                           \
-    "p%p [label = \" PARAMETERS | { %p | %p } \"];\n",                      \
+    "p%p [label = \" { PARAMETERS | { %p | %p } } \","                      \
+    "style=\"filled\", fillcolor=\"orange\", width=2.0];\n",                \
     (NODE), (NODE)->left, (NODE)->right);                                   \
     SET_LINKS(DUMP_CONTEXT, NODE);                                          \
 } while (0)
 
 #define DUMP_VARIABLE_DECLARATION(CONTEXT, DUMP_CONTEXT, NODE, NAME) do {   \
     fprintf((DUMP_CONTEXT)->file,                                           \
-    "p%p [label = \" VARIABLE: %s | { %p | %p } \"];\n",                    \
+    "p%p [label = \" { VARIABLE: %s | { %p | %p } } \","                    \
+    "style=\"filled\", fillcolor=\"pink\", width=2.0];\n",                  \
     (NODE), (NAME), (NODE)->left, (NODE)->right);                           \
     SET_LINKS(DUMP_CONTEXT, NODE);                                          \
 } while (0)
 
 #define DUMP_FUNCTION_CALL(CONTEXT, DUMP_CONTEXT, NODE) do {                \
     fprintf((DUMP_CONTEXT)->file,                                           \
-    "p%p [label = \" FUNCTION_CALL | { %p | %p } \"];\n",                   \
+    "p%p [label = \" { FUNCTION_CALL | { %p | %p } } \","                   \
+    "style=\"filled\", fillcolor=\"cyan\", width=2.0];\n",                  \
     (NODE), (NODE)->left, (NODE)->right);                                   \
     SET_LINKS(DUMP_CONTEXT, NODE);                                          \
 } while (0)
@@ -190,35 +210,47 @@ dumpError dumpNode(compilationContext *context, dumpContext *dumpContext, node<a
         dumpNode(context, dumpContext, node->right);
     }
 
-    SET_DOT_HEADER(dumpContext);
-
-    nameType nodeType = context->nameTable->data[node->data.data.nameTableIndex].type;
-
-    char *name = context->nameTable->data[node->data.data.nameTableIndex].name;
-
     switch (node->data.type) {
-        case nodeType::TERMINATOR:           DUMP_TERMINATOR          (context, dumpContext, node);
-        case nodeType::CONSTANT:             DUMP_CONSTANT            (context, dumpContext, node);
+        case nodeType::TERMINATOR:           DUMP_TERMINATOR          (context, dumpContext, node); break;
+        case nodeType::CONSTANT:             DUMP_CONSTANT            (context, dumpContext, node); break;
 
         case nodeType::STRING: {
-            switch (nodeType) {
-                case nameType::IDENTIFIER:   DUMP_STRING              (context, dumpContext, node, name, nameType::IDENTIFIER);
-                case nameType::OPERATOR:     DUMP_STRING              (context, dumpContext, node, name, nameType::OPERATOR);
-                case nameType::TYPE_NAME:    DUMP_STRING              (context, dumpContext, node, name, nameType::TYPE_NAME);
-                case nameType::SEPARATOR:    DUMP_STRING              (context, dumpContext, node, name, nameType::SEPARATOR);
+            char *name = context->nameTable->data[node->data.data.nameTableIndex].name;
+            int      nameTableIndex = node->data.data.nameTableIndex;
+            nameType nodeNameType   = context->nameTable->data[nameTableIndex].type;
+
+            switch (nodeNameType) {
+                case nameType::IDENTIFIER:   DUMP_STRING              (context, dumpContext, node, name, nameType::IDENTIFIER); break;
+                case nameType::OPERATOR:     DUMP_STRING              (context, dumpContext, node, name, nameType::OPERATOR);   break;
+                case nameType::TYPE_NAME:    DUMP_STRING              (context, dumpContext, node, name, nameType::TYPE_NAME);  break;
+                case nameType::SEPARATOR:    DUMP_STRING              (context, dumpContext, node, name, nameType::SEPARATOR);  break;
             }   
+
+            break;
         }
 
-        case nodeType::FUNCTION_DEFINITION:  DUMP_FUNCTION_DEFINITION (context, dumpContext, node, name);
+        case nodeType::FUNCTION_DEFINITION: {
+            int      nameTableIndex = node->data.data.nameTableIndex;
+            char *name = context->nameTable->data[nameTableIndex].name;
+                                             DUMP_FUNCTION_DEFINITION (context, dumpContext, node, name);
+
+            break;
+        } 
             
-        case nodeType::PARAMETERS:           DUMP_PARAMETERS          (context, dumpContext, node);
-        case nodeType::VARIABLE_DECLARATION: DUMP_VARIABLE_DECLARATION(context, dumpContext, node, name);
-        case nodeType::FUNCTION_CALL:        DUMP_FUNCTION_CALL       (context, dumpContext, node);
+        case nodeType::PARAMETERS:           DUMP_PARAMETERS          (context, dumpContext, node); break;
+
+        case nodeType::VARIABLE_DECLARATION: {
+            int      nameTableIndex = node->data.data.nameTableIndex;
+            char *name = context->nameTable->data[nameTableIndex].name;
+                                             DUMP_VARIABLE_DECLARATION(context, dumpContext, node, name);
+
+            break;                                               
+        }
+        
+        case nodeType::FUNCTION_CALL:        DUMP_FUNCTION_CALL       (context, dumpContext, node); break;
 
         default:                             break;
     }
-
-    SET_DOT_FOOTER(dumpContext);
 
     return dumpError::NO_ERRORS;
 }

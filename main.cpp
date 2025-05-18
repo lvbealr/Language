@@ -1,13 +1,32 @@
 #include "binaryTree.h"
+#include "binaryTreeDef.h"
+#include "core.h"
+#include "buffer.h"
+#include "lexer.h"
+#include "parser.h"
+#include <stdio.h>
+#include "astDump.h"
 
 int main(int argc, char *argv[]) {
-    __OPTIONS_DATA_INITIALIZE__();
-    parseConsole(argc, argv);
+    
+    Buffer<char> fileContentBuffer = {};
+    writeFileDataToBuffer(&fileContentBuffer, "test.txt");
 
-    binaryTree<int> tree = {};
-    BINARY_TREE_INITIALIZE(&tree);
+    compilationContext context = {};
+    initializeCompilationContext(&context, fileContentBuffer.data);
 
-    __OPTIONS_DATA_DESTRUCT__();
+    lexicalAnalysis(&context);
+
+    for (int i = 0; i < context.tokens->currentIndex; i++) {
+        dumpToken(&context, context.tokens->data[i]);
+    }
+
+    parseCode(&context);
+
+    dumpContext dumpCtxt = {};
+    dumpTree(&context, &dumpCtxt, context.AST);
+    
+    destroyCompilationContext(&context);
 
     return 0;
 }

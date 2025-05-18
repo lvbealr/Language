@@ -4,6 +4,7 @@
 #include "AST.h"
 #include "buffer.h"
 #include "binaryTreeDef.h"
+#include <cstdio>
 
 static node<astNode> *getBinaryOperation      (compilationContext *context, size_t priority, int localNameTableID, bool onlyArythm);
 static node<astNode> *getUnaryOperation       (compilationContext *context, size_t priority, int localNameTableID, bool onlyArythm);
@@ -23,6 +24,16 @@ static const Keyword    operations[][6]   = {{},
                                              {Keyword::ADD,   Keyword::SUB},
                                              {Keyword::EQUAL, Keyword::GREATER_OR_EQUAL, Keyword::LESS_OR_EQUAL, Keyword::GREATER, Keyword::LESS, Keyword::NOT_EQUAL},
                                              {Keyword::AND,   Keyword::OR}};
+                                             
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
+
+#define IS_NULL(EXPRESSION, RET_POINTER) {   \
+    if (!(EXPRESSION)) {                     \
+        return RET_POINTER;                  \
+    }                                        \
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 node<astNode> *getExpression(compilationContext *context, int localNameTableID) {
     customWarning(context, NULL);
@@ -34,18 +45,18 @@ static node<astNode> *getBinaryOperation(compilationContext *context, size_t pri
     customWarning(context, NULL);
 
     node<astNode> *firstValue = nextFunction[priority - 1](context, priority - 1, localNameTableID, onlyArythm);
-    customWarning(firstValue, NULL);
+    IS_NULL(firstValue, NULL);
 
     while (true) {
         node<astNode> *operation = getOperationWithPriority(context, priority, localNameTableID);
-        customWarning(operation, firstValue);
+        IS_NULL(operation, firstValue);
 
         if (onlyArythm) {
             SYNTAX_ASSERT(false, compilationError::OPERATION_EXPECTED);
         }
 
         node<astNode> *secondValue = nextFunction[priority - 1](context, priority - 1, localNameTableID, onlyArythm);
-        customWarning(secondValue, NULL);
+        IS_NULL(secondValue, NULL);
 
         operation->left     = firstValue;
         firstValue->parent  = operation;
@@ -63,7 +74,7 @@ static node<astNode> *getUnaryOperation(compilationContext *context, size_t prio
     node<astNode> *operation = getOperationWithPriority(context, priority, localNameTableID);
     node<astNode> *value     = nextFunction[priority - 1](context, priority - 1, localNameTableID, onlyArythm);
 
-    customWarning(value, NULL);
+    IS_NULL(value, NULL);
 
     if (operation) {
         if (onlyArythm) {
@@ -88,17 +99,17 @@ static node<astNode> *getComparison(compilationContext *context, size_t priority
     customWarning(context, NULL);
 
     node<astNode> *firstValue = nextFunction[priority - 1](context, priority - 1, localNameTableID, onlyArythm);
-    customWarning(firstValue, NULL);
+    IS_NULL(firstValue, NULL);
 
     node<astNode> *operation = getOperationWithPriority(context, priority, localNameTableID);
-    customWarning(operation, firstValue);
+    IS_NULL(operation, firstValue);
 
     if (onlyArythm) {
         SYNTAX_ASSERT(false, compilationError::OPERATION_EXPECTED);
     }
 
     node<astNode> *secondValue = nextFunction[priority - 1](context, priority - 1, localNameTableID, onlyArythm);
-    customWarning(secondValue, NULL);
+    IS_NULL(secondValue, NULL);
 
     operation->left     = firstValue;
     firstValue->parent  = operation;
@@ -115,7 +126,7 @@ static node<astNode> *getPrimaryExpression(compilationContext *context, size_t p
     if (getTokenAndDestroy(context, Keyword::LEFT_BRACKET, compilationError::BRACKET_EXPECTED)) {
         node<astNode> *expression = nextFunction[MAX_PRIORITY](context, MAX_PRIORITY, localNameTableID, onlyArythm);
 
-        customWarning(getTokenAndDestroy(context, Keyword::RIGHT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
+        IS_NULL(getTokenAndDestroy(context, Keyword::RIGHT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
 
         return expression;
     }
@@ -196,6 +207,7 @@ compilationError parseCode(compilationContext *context) {
     customWarning(context != NULL, compilationError::CONTEXT_ERROR);
 
     context->tokenIndex = 0;
+
     context->AST->root = getGrammar(context);
 
     return context->error;
@@ -206,17 +218,17 @@ compilationError parseCode(compilationContext *context) {
 static node<astNode> *getGrammar(compilationContext *context) {
     customWarning(context, NULL);
 
-    customWarning(getTokenAndDestroy(context, Keyword::INITIAL_OPERATOR, compilationError::INITIAL_OPERATOR_EXPECTED), NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::INITIAL_OPERATOR, compilationError::INITIAL_OPERATOR_EXPECTED), NULL);
 
     node<astNode> *entryPointIdentifier = getStringToken(context, nameType::IDENTIFIER, compilationError::IDENTIFIER_EXPECTED);
-    customWarning(entryPointIdentifier, NULL);
+    IS_NULL(entryPointIdentifier, NULL);
 
-    customWarning(getTokenAndDestroy(context, Keyword::OPERATOR_SEPARATOR, compilationError::OPERATOR_SEPARATOR_EXPECTED), NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::OPERATOR_SEPARATOR, compilationError::OPERATOR_SEPARATOR_EXPECTED), NULL);
 
     context->entryPoint = entryPointIdentifier->data.data.nameTableIndex;
 
     node<astNode> *rootNode = getTranslationUnit(context);
-    customWarning(rootNode, NULL);
+    IS_NULL(rootNode, NULL);
 
     destroySingleNode(entryPointIdentifier);
 
@@ -233,7 +245,7 @@ static node<astNode> *getTranslationUnit(compilationContext *context) {
     customWarning(context, NULL);
 
     node<astNode> *externalDeclaration = getExternalDeclaration(context);
-    customWarning(externalDeclaration, NULL);
+    IS_NULL(externalDeclaration, NULL);
 
     SYNTAX_ASSERT(currentToken->data.type == nodeType::STRING &&
                   context->nameTable->data[currentNameTableIndex].keyword == Keyword::OPERATOR_SEPARATOR,
@@ -276,13 +288,13 @@ static node<astNode> *getExternalDeclaration(compilationContext *context) {
 static node<astNode> *getFunctionDefinition(compilationContext *context, int localNameTableID) {
     customWarning(context, NULL);
 
-    customWarning(getTokenAndDestroy(context, Keyword::FUNCTION_DEFINITION, compilationError::FUNCTION_EXPECTED) != false, NULL);
-
+    IS_NULL(getTokenAndDestroy(context, Keyword::FUNCTION_DEFINITION, compilationError::FUNCTION_EXPECTED) != false, NULL);
+    
     node<astNode> *type = getStringToken(context, nameType::TYPE_NAME, compilationError::TYPE_NAME_EXPECTED);
-    customWarning(type, NULL);
+    IS_NULL(type, NULL);
 
     node<astNode> *identifier = getStringToken(context, nameType::IDENTIFIER, compilationError::IDENTIFIER_EXPECTED);
-    customWarning(identifier, NULL);
+    IS_NULL(identifier, NULL);
 
     size_t identifierIndex = identifier->data.data.nameTableIndex;
 
@@ -298,19 +310,18 @@ static node<astNode> *getFunctionDefinition(compilationContext *context, int loc
     addLocalIdentifier(0, context->localTables,
                        localNameTableElement {.type = localNameType::FUNCTION_IDENTIFIER, .globalNameID = identifierIndex}, 0);
 
-    customWarning(getTokenAndDestroy(context, Keyword::LEFT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
-
+    IS_NULL(getTokenAndDestroy(context, Keyword::LEFT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
+    
     node<astNode> *parameters = getParameterList(context, newNameTableIndex);
     CHECK_FOR_ERROR(parameters, compilationError::TYPE_NAME_EXPECTED);
 
-    customWarning(getTokenAndDestroy(context, Keyword::RIGHT_BRACKET, compilationError::BRACKET_EXPECTED),    NULL);
-    customWarning(getTokenAndDestroy(context, Keyword::BLOCK_OPEN,    compilationError::CODE_BLOCK_EXPECTED), NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::RIGHT_BRACKET, compilationError::BRACKET_EXPECTED),    NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::BLOCK_OPEN,    compilationError::CODE_BLOCK_EXPECTED), NULL);
 
     node<astNode> *functionContent = getOperatorList(context, newNameTableIndex);
-
     CHECK_FOR_ERROR(functionContent, compilationError::OPERATOR_NOT_FOUND);
 
-    customWarning(getTokenAndDestroy(context, Keyword::BLOCK_CLOSE, compilationError::CODE_BLOCK_EXPECTED), NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::BLOCK_CLOSE, compilationError::CODE_BLOCK_EXPECTED), NULL);
 
     return _FUNCTION_DEFINITION_(type, _PARAMETERS_(parameters, functionContent), identifierIndex);
 }
@@ -319,10 +330,10 @@ static node<astNode> *getDeclaration(compilationContext *context, int localNameT
     customWarning(context, NULL);
 
     node<astNode> *type = getStringToken(context, nameType::TYPE_NAME, compilationError::TYPE_NAME_EXPECTED);
-    customWarning(type, NULL);
+    IS_NULL(type, NULL);
 
     node<astNode> *identifier = getStringToken(context, nameType::IDENTIFIER, compilationError::IDENTIFIER_EXPECTED);
-    customWarning(identifier, NULL);
+    IS_NULL(identifier, NULL);
 
     context->tokenIndex--;
 
@@ -336,13 +347,13 @@ static node<astNode> *getDeclaration(compilationContext *context, int localNameT
                        localNameTableElement {.type = localNameType::VARIABLE_IDENTIFIER, .globalNameID = identifierIndex}, 1);
 
     node<astNode> *initializerDeclarator = getInitializerDeclarator(context, localNameTableID);
-    customWarning(initializerDeclarator, NULL);
+    IS_NULL(initializerDeclarator, NULL);
 
     return _VARIABLE_DECLARATION_(type, initializerDeclarator, identifierIndex);
 }
 
 static node<astNode> *getInitializerDeclarator(compilationContext *context, int localNameTableID) {
-    customWarning(context != NULL, NULL);
+    customWarning(context, NULL);
 
     node<astNode> *initializer = getAssignmentExpression(context, localNameTableID);
 
@@ -362,15 +373,15 @@ static node<astNode> *getAssignmentExpression (compilationContext *context, int 
     customWarning(context, NULL);
 
     node<astNode> *identifier = getStringToken(context, nameType::IDENTIFIER, compilationError::IDENTIFIER_EXPECTED);
-    customWarning(identifier, NULL);
+    IS_NULL(identifier, NULL);
 
     DECLARATION_ASSERT(identifier, localNameType::VARIABLE_IDENTIFIER, compilationError::VARIABLE_NOT_DECLARED);
 
     node<astNode> *assignmentOperation = getKeyword(context, Keyword::ASSIGNMENT, compilationError::ASSIGNMENT_EXPECTED);
-    customWarning(assignmentOperation, NULL);
+    IS_NULL(assignmentOperation, NULL);
 
     node<astNode> *expression = getExpression(context, localNameTableID);
-    customWarning(expression, NULL);
+    IS_NULL(expression, NULL);
 
     assignmentOperation->left  = expression;
     expression->parent         = assignmentOperation;
@@ -421,11 +432,11 @@ static node<astNode> *getOperator(compilationContext *context, int localNameTabl
         GET_EXPECTED_OPERATOR(getFunctionCall,         FUNCTION_CALL_EXPECTED);
         GET_EXPECTED_OPERATOR(getAssignmentExpression, IDENTIFIER_EXPECTED);
         GET_EXPECTED_OPERATOR(getDeclaration,          TYPE_NAME_EXPECTED);
-
-        customWarning(getTokenAndDestroy(context, Keyword::BLOCK_OPEN, compilationError::OPERATOR_NOT_FOUND), NULL);
+        
+        IS_NULL(getTokenAndDestroy(context, Keyword::BLOCK_OPEN, compilationError::OPERATOR_NOT_FOUND), NULL);
         expectedOperator = getOperatorList(context, localNameTableID);
-        customWarning(expectedOperator, NULL);
-        customWarning(getTokenAndDestroy(context, Keyword::BLOCK_CLOSE, compilationError::OPERATOR_NOT_FOUND), NULL);
+        IS_NULL(expectedOperator, NULL);
+        IS_NULL(getTokenAndDestroy(context, Keyword::BLOCK_CLOSE, compilationError::OPERATOR_NOT_FOUND), NULL);
     } while (0);
 
     node<astNode> *separator = getKeyword(context, Keyword::OPERATOR_SEPARATOR, compilationError::OPERATOR_SEPARATOR_EXPECTED);
@@ -441,7 +452,7 @@ static node<astNode> *getOperatorList(compilationContext *context, int localName
     customWarning(context, NULL);
 
     node<astNode> *firstOperator = getOperator(context, localNameTableID);
-    customWarning(firstOperator, NULL);
+    IS_NULL(firstOperator, NULL);
 
     node<astNode> *secondOperator = getOperatorList(context, localNameTableID);
 
@@ -460,15 +471,15 @@ static node<astNode> *getConditionOperator(compilationContext *context, Keyword 
     customWarning(context, NULL);
 
     node<astNode> *conditionOperator = getKeyword(context, operatorKeyword, error);
-    customWarning(conditionOperator, NULL);
+    IS_NULL(conditionOperator, NULL);
 
     node<astNode> *conditionExpression = getExpression(context, localNameTableID);
-    customWarning(conditionExpression, NULL);
+    IS_NULL(conditionExpression, NULL);
 
-    customWarning(getTokenAndDestroy(context, Keyword::CONDITION_SEPARATOR, compilationError::CONDITION_SEPARATOR_EXPECTED), NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::CONDITION_SEPARATOR, compilationError::CONDITION_SEPARATOR_EXPECTED), NULL);
 
     node<astNode> *operatorContent = getOperator(context, localNameTableID);
-    customWarning(operatorContent, NULL);
+    IS_NULL(operatorContent, NULL);
 
     conditionOperator->left     = conditionExpression;
     conditionExpression->parent = conditionOperator;
@@ -483,10 +494,10 @@ static node<astNode> *getReturnOperator(compilationContext *context, int localNa
     customWarning(context, NULL);
 
     node<astNode> *returnStatement = getKeyword(context, Keyword::RETURN, compilationError::RETURN_EXPECTED);
-    customWarning(returnStatement, NULL);
+    IS_NULL(returnStatement, NULL);
 
     node<astNode> *expression = getExpression(context, localNameTableID);
-    customWarning(expression, NULL);
+    IS_NULL(expression, NULL);
 
     returnStatement->right = expression;
     expression->parent     = returnStatement;
@@ -498,10 +509,10 @@ static node<astNode> *getOutOperator(compilationContext *context, int localNameT
     customWarning(context, NULL);
 
     node<astNode> *outOperator = getKeyword(context, Keyword::OUT, compilationError::OUT_EXPECTED);
-    customWarning(outOperator, NULL);
+    IS_NULL(outOperator, NULL);
 
     node<astNode> *expression = getExpression(context, localNameTableID);
-    customWarning(expression, NULL);
+    IS_NULL(expression, NULL);
 
     outOperator->right = expression;
     expression->parent = outOperator;
@@ -514,18 +525,18 @@ static node<astNode> *getOutOperator(compilationContext *context, int localNameT
 node<astNode> *getFunctionCall(compilationContext *context, int localNameTableID) {
     customWarning(context, NULL);
 
-    customWarning(getTokenAndDestroy(context, Keyword::FUNCTION_CALL, compilationError::FUNCTION_CALL_EXPECTED), NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::FUNCTION_CALL, compilationError::FUNCTION_CALL_EXPECTED), NULL);
 
     node<astNode> *identifier = getStringToken(context, nameType::IDENTIFIER, compilationError::IDENTIFIER_EXPECTED);
-    customWarning(identifier, NULL);
+    IS_NULL(identifier, NULL);
     writeDataToBuffer(context->functionCalls, &identifier, 1);
 
-    customWarning(getTokenAndDestroy(context, Keyword::LEFT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::LEFT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
 
     node<astNode> *arguments = getArgumentList(context, localNameTableID);
     CHECK_FOR_ERROR(arguments, compilationError::CONSTANT_EXPECTED);
 
-    customWarning(getTokenAndDestroy(context, Keyword::RIGHT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
+    IS_NULL(getTokenAndDestroy(context, Keyword::RIGHT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
 
     return _FUNCTION_CALL_(arguments, identifier);
 }
@@ -534,7 +545,7 @@ static node<astNode> *getArgumentList(compilationContext *context, int localName
     customWarning(context, NULL);
 
     node<astNode> *argument = getExpression(context, localNameTableID);
-    customWarning(argument, NULL);
+    IS_NULL(argument, NULL);
 
     node<astNode> *separator = getKeyword(context, Keyword::ARGUMENT_SEPARATOR, compilationError::ARGUMENT_SEPARATOR_EXPECTED);
 
@@ -544,7 +555,7 @@ static node<astNode> *getArgumentList(compilationContext *context, int localName
     }
 
     node<astNode> *nextArgument = getArgumentList(context, localNameTableID);
-    customWarning(nextArgument, NULL);
+    IS_NULL(nextArgument, NULL);
 
     separator->left      = argument;
     argument->parent     = separator;
@@ -559,7 +570,7 @@ static node<astNode> *getParameterList(compilationContext *context, int localNam
     customWarning(context, NULL);
 
     node<astNode> *parameter = getDeclaration(context, localNameTableID);
-    customWarning(parameter, NULL);
+    IS_NULL(parameter, NULL);
 
     node<astNode> *separator = getKeyword(context, Keyword::ARGUMENT_SEPARATOR, compilationError::ARGUMENT_SEPARATOR_EXPECTED);
 
@@ -569,7 +580,7 @@ static node<astNode> *getParameterList(compilationContext *context, int localNam
     }
 
     node<astNode> *nextParameter = getParameterList(context, localNameTableID);
-    customWarning(nextParameter, NULL);
+    IS_NULL(nextParameter, NULL);
 
     separator->left       = parameter;
     parameter->parent     = separator;
