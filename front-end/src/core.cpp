@@ -10,9 +10,24 @@ static const char *nameTypeToString(nameType type);
 
 static const bool GLOBAL = true;
 
-compilationError compilationContextInitialize(compilationContext *context, char *fileContent) {
+compilationError initializeCompilationContext(compilationContext *context, char *fileContent) {
     customWarning(context,     compilationError::CONTEXT_ERROR);
     customWarning(fileContent, compilationError::CONTEXT_ERROR);
+
+    context->localTables = (Buffer<localNameTable> *)calloc(1, sizeof(Buffer<localNameTable>));
+    customWarning(context->localTables, compilationError::ALLOCATION_ERROR);
+
+    context->nameTable = (Buffer<nameTableElement> *)calloc(1, sizeof(Buffer<nameTableElement>));
+    customWarning(context->nameTable, compilationError::ALLOCATION_ERROR);
+
+    context->tokens = (Buffer<node<astNode> *> *)calloc(1, sizeof(Buffer<node<astNode> *>));
+    customWarning(context->tokens, compilationError::ALLOCATION_ERROR);
+
+    context->errorBuffer = (Buffer<errorData> *)calloc(1, sizeof(Buffer<errorData>));
+    customWarning(context->errorBuffer, compilationError::ALLOCATION_ERROR);
+
+    context->functionCalls = (Buffer<node<astNode> *> *)calloc(1, sizeof(Buffer<node<astNode> *>));
+    customWarning(context->functionCalls, compilationError::ALLOCATION_ERROR);
 
     if (bufferInitialize(context->localTables) != bufferError::NO_BUFFER_ERROR) {
         return compilationError::CONTEXT_ERROR;
@@ -38,6 +53,9 @@ compilationError compilationContextInitialize(compilationContext *context, char 
 
     context->error = compilationError::NO_ERRORS;
 
+    context->AST = (binaryTree<astNode> *)calloc(1, sizeof(binaryTree<astNode>));
+    customWarning(context->AST, compilationError::ALLOCATION_ERROR);
+
     context->fileContent = fileContent;
     context->fileSize = strlen(fileContent);
     context->currentLine = 1;
@@ -45,20 +63,22 @@ compilationError compilationContextInitialize(compilationContext *context, char 
     return compilationError::NO_ERRORS;
 }
 
-compilationError compilationContextDestruct(compilationContext *context) {
+compilationError destroyCompilationContext(compilationContext *context) {
     customWarning(context, compilationError::CONTEXT_ERROR);
 
-    if (context->AST->root) {
-        nodeDestruct(context->AST, &context->AST->root);
-    } else {
-        for (size_t tokenIndex = 0; tokenIndex < context->tokens->currentIndex; tokenIndex++) {
-            FREE_(context->tokens->data[tokenIndex]);
+    if (context->AST) {
+        if (context->AST->root) {
+            nodeDestruct(context->AST, &context->AST->root);
+        } else {
+            for (size_t tokenIndex = 0; tokenIndex < context->tokens->currentIndex; tokenIndex++) {
+                FREE_(context->tokens->data[tokenIndex]);
+            }
         }
     }
 
     for (size_t nameIndex = 0; nameIndex < context->nameTable->currentIndex; nameIndex++) {
         if (context->nameTable->data[nameIndex].type == nameType::IDENTIFIER) {
-            FREE_(context->nameTable->data[nameIndex].name)
+            FREE_(context->nameTable->data[nameIndex].name);
         }
     }
 
