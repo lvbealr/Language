@@ -25,13 +25,18 @@ enum class saveDataError {
 };
 
 struct saveDataContext {
-    Buffer<char> *buffer   = {};
-    char         *fileName = {};
+    Buffer<char> *NTBuffer   = {};
+    char         *NTFileName = {};
+
+    Buffer<char> *ASTBuffer   = {};
+    char         *ASTFileName = {};
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
-saveDataError initializeSaveDataContext(saveDataContext *saveContext, char *fileName);
+char *getFileName();
+
+saveDataError initializeSaveDataContext(saveDataContext *saveContext, char *NTfileName, char *ASTfileName);
 saveDataError destroySaveDataContext   (saveDataContext *saveContext);
 
 saveDataError saveNameTable(compilationContext *context, saveDataContext *saveContext);
@@ -40,5 +45,9 @@ saveDataError saveGlobalNameTable(compilationContext *context, saveDataContext *
 saveDataError saveLocalNameTable(compilationContext *context, saveDataContext *saveContext, size_t localTableIndex, size_t keywordsCount);
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
+
+saveDataError saveASTTree   (compilationContext *context, saveDataContext *saveContext);
+saveDataError saveASTSubtree(compilationContext *context, saveDataContext *saveContext, node<astNode> *node, size_t keywordsCount);
+saveDataError saveASTNode   (compilationContext *context, saveDataContext *saveContext, node<astNode> *node, size_t keywordsCount);
 
 #endif // TREE_SAVER_H_

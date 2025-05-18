@@ -28,9 +28,14 @@ int main(int argc, char *argv[]) {
     dumpTree(&context, &dumpCtxt, context.AST);
     
     saveDataContext saveCtxt = {};
+    initializeSaveDataContext(&saveCtxt, getFileName(), getFileName());
     saveNameTable(&context, &saveCtxt);
 
-    printf("%s", saveCtxt.buffer->data);
+    // printf("%s", saveCtxt.NTBuffer->data);
+
+    saveASTTree(&context, &saveCtxt);   
+
+    printf("%s", saveCtxt.ASTBuffer->data);
 
     destroySaveDataContext(&saveCtxt);
     destroyCompilationContext(&context);
