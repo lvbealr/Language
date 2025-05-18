@@ -6,6 +6,7 @@
 #include "parser.h"
 #include <stdio.h>
 #include "astDump.h"
+#include "treeSaver.h"
 
 int main(int argc, char *argv[]) {
     
@@ -26,6 +27,12 @@ int main(int argc, char *argv[]) {
     dumpContext dumpCtxt = {};
     dumpTree(&context, &dumpCtxt, context.AST);
     
+    saveDataContext saveCtxt = {};
+    saveNameTable(&context, &saveCtxt);
+
+    printf("%s", saveCtxt.buffer->data);
+
+    destroySaveDataContext(&saveCtxt);
     destroyCompilationContext(&context);
 
     return 0;

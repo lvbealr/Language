@@ -7,6 +7,7 @@ add_library(front-end STATIC
     src/lexer.cpp
     src/parser.cpp
     AST/src/nameTable.cpp
+    src/treeSaver.cpp
 )
 
 target_link_libraries(front-end PUBLIC customWarning binaryTree Buffer)

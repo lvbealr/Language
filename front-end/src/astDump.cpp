@@ -5,22 +5,11 @@
 #include "binaryTreeDef.h"
 #include "customWarning.h"
 #include <time.h>
-
-// -------------------------------------------------------------------------------------------------------------------------------------------------- //
-
-#define COPY_STRING(DESTINATION, SOURCE, SIZE) {          \
-    DESTINATION = (char *)calloc(SIZE + 1, sizeof(char)); \
-    strncpy(DESTINATION, SOURCE, SIZE);                   \
-    (DESTINATION)[SIZE] = '\0';                           \
-}
-
-// -------------------------------------------------------------------------------------------------------------------------------------------------- //
     
-dumpError initializeDumpContext(dumpContext *dumpContext, const char *fileName) {
+dumpError initializeDumpContext(dumpContext *dumpContext, char *fileName) {
     customWarning(dumpContext,  dumpError::CONTEXT_BAD_POINTER);
-    customWarning(fileName, dumpError::BAD_FILENAME);
 
-    COPY_STRING(dumpContext->fileName, fileName, MAX_FILE_NAME_SIZE - 1);
+    dumpContext->fileName = fileName;
 
     dumpContext->file = fopen(dumpContext->fileName, "w");
     customWarning(dumpContext->file, dumpError::FILE_OPEN_ERROR);

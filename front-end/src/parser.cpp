@@ -307,9 +307,10 @@ static node<astNode> *getFunctionDefinition(compilationContext *context, int loc
     ++context->tokenIndex;
 
     int newNameTableIndex = addLocalNameTable((int) identifierIndex, context->localTables);
+    
     addLocalIdentifier(0, context->localTables,
-                       localNameTableElement {.type = localNameType::FUNCTION_IDENTIFIER, .globalNameID = identifierIndex}, 0);
-
+                       localNameTableElement {.type = localNameType::FUNCTION_IDENTIFIER, .globalNameID = identifierIndex}, 1);
+    
     IS_NULL(getTokenAndDestroy(context, Keyword::LEFT_BRACKET, compilationError::BRACKET_EXPECTED), NULL);
     
     node<astNode> *parameters = getParameterList(context, newNameTableIndex);
