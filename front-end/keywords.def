@@ -9,7 +9,7 @@ KEYWORD (COS,                  22, "косинус",          nameType::OPERATOR
 KEYWORD (FLOOR,                23, "опустить",         nameType::OPERATOR)
 KEYWORD (ADD,                  24, "плюс",             nameType::OPERATOR)
 KEYWORD (SUB,                  25, "минус",            nameType::OPERATOR)
-KEYWORD (MUL,                  26, "помножить на",     nameType::OPERATOR)
+KEYWORD (MUL,                  26, "умножить на",      nameType::OPERATOR)
 KEYWORD (DIV,                  27, "рассечь",          nameType::OPERATOR)
 KEYWORD (DIFF,                 28, "штрих",            nameType::OPERATOR)
 KEYWORD (SQRT,                 29, "сквирт",           nameType::OPERATOR)
@@ -27,7 +27,7 @@ KEYWORD (NOT,                  39, "не",               nameType::OPERATOR)
 KEYWORD (OPERATOR_SEPARATOR,   41, ";",                nameType::SEPARATOR)
 KEYWORD (ARGUMENT_SEPARATOR,   42, ",",                nameType::SEPARATOR)
 
-KEYWORD (NUMBER,               51, "фраер",            nameType::NAME_TYPE)
+KEYWORD (NUMBER,               51, "фраер",            nameType::TYPE_NAME)
 
 KEYWORD (IN,                   61, "зашел в хату",     nameType::OPERATOR)
 KEYWORD (OUT,                  62, "откинулся",        nameType::OPERATOR)

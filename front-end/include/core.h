@@ -38,6 +38,7 @@ enum class compilationError: long long int {
     FUNCTION_NOT_DECLARED        = 1 << 28,
     VARIABLE_NOT_DECLARED        = 1 << 29,
     OPERATOR_NOT_FOUND           = 1 << 30,
+    ALLOCATION_ERROR             = 1 << 31,
 };
 
 struct errorData {
@@ -70,8 +71,8 @@ struct compilationContext {
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
-compilationError compilationContextInitialize(compilationContext *context, char *fileContent);
-compilationError compilationContextDestruct  (compilationContext *context);
+compilationError initializeCompilationContext(compilationContext *context, char *fileContent);
+compilationError destroyCompilationContext   (compilationContext *context);
 
 compilationError dumpTokenTable(compilationContext *context);
 compilationError dumpToken     (compilationContext *context, node<astNode> *token);

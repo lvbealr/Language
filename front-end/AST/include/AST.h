@@ -20,7 +20,7 @@ enum class nodeType {
 };
 
 union nodeData {
-    size_t  nameTableIndex;         // identifier index in global name table
+    size_t  nameTableIndex;
     Keyword keyword;
     int     number = POISON_VALUE;
 };
