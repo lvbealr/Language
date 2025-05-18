@@ -2,7 +2,7 @@
 #include "nameTable.h"
 #include "buffer.h"
 
-bufferError initializeNameTable(Buffer<nameTableElement> *nameTable, int isGlobal) {
+bufferError initializeNameTable(Buffer<nameTableElement> *nameTable, bool isGlobal) {
     customWarning(nameTable, bufferError::POINTER_IS_NULL);
 
     if (bufferInitialize(nameTable) != bufferError::NO_BUFFER_ERROR) {
@@ -12,7 +12,7 @@ bufferError initializeNameTable(Buffer<nameTableElement> *nameTable, int isGloba
     if (isGlobal) {
         #define KEYWORD(NAME, NUMBER, KEYWORD, TYPE, ...) {                                                         \
             nameTableElement newElement = {.name = KEYWORD, .type = TYPE, .keyword = static_cast<Keyword>(NUMBER)}; \
-            if (writeDataToBuffer(nameTable, &element, 1) != bufferError::NO_BUFFER_ERROR) {                        \
+            if (writeDataToBuffer(nameTable, &newElement, 1) != bufferError::NO_BUFFER_ERROR) {                     \
                 return bufferError::BUFFER_ENDED;                                                                   \
             }                                                                                                       \
         }
