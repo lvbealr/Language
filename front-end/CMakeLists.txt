@@ -17,3 +17,7 @@ target_include_directories(front-end PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/AST/include
 )
+
+add_executable(frontend main.cpp)
+
+target_link_libraries(frontend PRIVATE front-end)
