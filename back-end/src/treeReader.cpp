@@ -1,4 +1,5 @@
 #include "treeReader.h"
+#include "colorPrint.h"
 #include "core.h"
 #include <ctype.h>
 
@@ -22,19 +23,19 @@
 
 static translationError readNone(translationContext *context, Buffer<char> *fileContent, size_t *currentFilePosition, node<astNode> *node) {
     customWarning(context, translationError::CONTEXT_BAD_POINTER);
-    customWarning(fileContent, translationError::BAD_BUFFER_POINTER);
+    customWarning(fileContent, translationError::BUFFER_BAD_POINTER);
 
     return translationError::NO_ERRORS;
 }
 
 static translationError readConstant(translationContext *context, Buffer<char> *fileContent, size_t *currentFilePosition, node<astNode> *node) {
     customWarning(context, translationError::CONTEXT_BAD_POINTER);
-    customWarning(fileContent, translationError::BAD_BUFFER_POINTER);
+    customWarning(fileContent, translationError::BUFFER_BAD_POINTER);
 
     int number = 0;
     int length = 0;
 
-    sscanf(fileContent->data + (*currentFilePosition), "%d%n[^\n]", &number, &length);
+    sscanf(fileContent->data + (*currentFilePosition), "%d%n", &number, &length);
     (*currentFilePosition) += length;
 
     node->data.data.number = number;
@@ -44,12 +45,12 @@ static translationError readConstant(translationContext *context, Buffer<char> *
 
 static translationError readKeyword(translationContext *context, Buffer<char> *fileContent, size_t *currentFilePosition, node<astNode> *node) {
     customWarning(context, translationError::CONTEXT_BAD_POINTER);
-    customWarning(fileContent, translationError::BAD_BUFFER_POINTER);
+    customWarning(fileContent, translationError::BUFFER_BAD_POINTER);
 
     int keywordID     = 0;
     int keywordLength = 0;
 
-    sscanf(fileContent->data + (*currentFilePosition), "%d%n[^\n]", &keywordID, &keywordLength);
+    sscanf(fileContent->data + (*currentFilePosition), "%d%n", &keywordID, &keywordLength);
     (*currentFilePosition) += keywordLength;
     
     node->data.data.keyword = static_cast<Keyword>(keywordID);
@@ -59,11 +60,11 @@ static translationError readKeyword(translationContext *context, Buffer<char> *f
 
 static translationError readIdentifierID(translationContext *context, Buffer<char> *fileContent, size_t *currentFilePosition, node<astNode> *node) {
     customWarning(context, translationError::CONTEXT_BAD_POINTER);
-    customWarning(fileContent, translationError::BAD_BUFFER_POINTER);
+    customWarning(fileContent, translationError::BUFFER_BAD_POINTER);
 
     int identifierLength = 0;
 
-    sscanf(fileContent->data + (*currentFilePosition), "%lu%n[^\n]", &node->data.data.nameTableIndex, &identifierLength);
+    sscanf(fileContent->data + (*currentFilePosition), "%lu%n", &node->data.data.nameTableIndex, &identifierLength);
     (*currentFilePosition) += identifierLength;
 
     return translationError::NO_ERRORS;
@@ -162,11 +163,11 @@ translationError readNameTable(translationContext *context, const char *fileName
     size_t localTablesCount       = 0;
     int    localTablesCountLength = 0;
 
-    sscanf(fileContent.data + currentFilePosition, "%lu%n[^\n]", &localTablesCount, &localTablesCountLength);
+    sscanf(fileContent.data + currentFilePosition, "%lu%n", &localTablesCount, &localTablesCountLength);
     currentFilePosition += localTablesCountLength;
 
     for (size_t localTableIndex = 0; localTableIndex < localTablesCount; localTableIndex++) {
-        addLocalNameTable(0, context->localTables);
+        addLocalNameTable(localTableIndex, context->localTables);
         readLocalNameTable(context, localTableIndex, &fileContent, &currentFilePosition);
     }
 
@@ -175,12 +176,12 @@ translationError readNameTable(translationContext *context, const char *fileName
 
 translationError readGlobalNameTable(translationContext *context, Buffer<char> *fileContent, size_t *currentFilePosition) {
     customWarning(context,             translationError::CONTEXT_BAD_POINTER);
-    customWarning(fileContent,         translationError::BAD_BUFFER_POINTER);
+    customWarning(fileContent,         translationError::BUFFER_BAD_POINTER);
 
     size_t globalNameTableSize       = 0;
     int    globalNameTableSizeLength = 0;
 
-    sscanf(fileContent->data + (*currentFilePosition), "%lu%n[^\n]", &globalNameTableSize, &globalNameTableSizeLength);
+    sscanf(fileContent->data + (*currentFilePosition), "%lu%n", &globalNameTableSize, &globalNameTableSizeLength);
     (*currentFilePosition) += globalNameTableSizeLength;
 
     initializeNameTable(context->nameTable, false);
@@ -200,13 +201,13 @@ translationError readGlobalNameTable(translationContext *context, Buffer<char> *
 
 translationError readLocalNameTable(translationContext *context, size_t localTableIndex, Buffer<char> *fileContent, size_t *currentFilePosition) {
     customWarning(context,             translationError::CONTEXT_BAD_POINTER);
-    customWarning(fileContent,         translationError::BAD_BUFFER_POINTER);;
+    customWarning(fileContent,         translationError::BUFFER_BAD_POINTER);;
 
     size_t localNameTableSize       = 0;
     int    localNameTableID         = 0;
     int    localNameTableSizeLength = 0;
 
-    sscanf(fileContent->data + (*currentFilePosition), "%lu %d%n[^\n]", &localNameTableSize, &localNameTableID, &localNameTableSizeLength);
+    sscanf(fileContent->data + (*currentFilePosition), "%lu %d%n", &localNameTableSize, &localNameTableID, &localNameTableSizeLength);
     (*currentFilePosition) += localNameTableSizeLength;
 
     context->localTables->data[localTableIndex].nameTableID = localNameTableID;
@@ -216,7 +217,7 @@ translationError readLocalNameTable(translationContext *context, size_t localTab
         size_t elementType              = 0;
         int    lineLength               = 0;
 
-        sscanf(fileContent->data + (*currentFilePosition), "%lu %lu%n[^\n]", &globalNameTableElementID, &elementType, &lineLength);
+        sscanf(fileContent->data + (*currentFilePosition), "%lu %lu%n", &globalNameTableElementID, &elementType, &lineLength);
         (*currentFilePosition) += lineLength;
 
         addLocalIdentifier(localTableIndex, context->localTables, 

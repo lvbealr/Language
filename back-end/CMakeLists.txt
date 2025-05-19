@@ -5,6 +5,8 @@ add_library(back-end STATIC
     # add src
     src/core.cpp
     src/treeReader.cpp
+    src/asmTranslator.cpp
+    ${CMAKE_SOURCE_DIR}/front-end/AST/src/nameTable.cpp
 )
 
 target_link_libraries(back-end PUBLIC customWarning binaryTree Buffer)
