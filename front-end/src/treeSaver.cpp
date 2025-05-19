@@ -202,14 +202,14 @@ saveDataError saveASTNode(compilationContext *context, saveDataContext *saveCont
 
     if (node->data.type == nodeType::STRING) {
         if (context->nameTable->data[node->data.data.nameTableIndex].keyword == Keyword::UNDEFINED) {
-            snprintf(numStr, sizeof(numStr), "%d ", static_cast<int>(context->nameTable->data[node->data.data.nameTableIndex].keyword));
-            writeStringToBuffer(saveContext->ASTBuffer, numStr);
+            writeStringToBuffer(saveContext->ASTBuffer, "2 ");
 
             snprintf(numStr, sizeof(numStr), "%lu ", node->data.data.nameTableIndex - keywordsCount);
             writeStringToBuffer(saveContext->ASTBuffer, numStr);
         } else {
             snprintf(numStr, sizeof(numStr), "%d ", static_cast<int>(node->data.type) + 1);
             writeStringToBuffer(saveContext->ASTBuffer, numStr);
+            
             snprintf(numStr, sizeof(numStr), "%d ", static_cast<int>(context->nameTable->data[node->data.data.nameTableIndex].keyword));
             writeStringToBuffer(saveContext->ASTBuffer, numStr);
         }
