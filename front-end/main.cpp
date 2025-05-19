@@ -11,7 +11,7 @@
 int main(int argc, char *argv[]) {
     
     Buffer<char> fileContentBuffer = {};
-    writeFileDataToBuffer(&fileContentBuffer, "test.txt");
+    writeFileDataToBuffer(&fileContentBuffer, "tests/factorial.prison");
 
     compilationContext context = {};
     initializeCompilationContext(&context, fileContentBuffer.data);
