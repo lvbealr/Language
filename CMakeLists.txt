@@ -12,7 +12,5 @@ add_subdirectory(customWarning)
 add_subdirectory(Buffer)
 add_subdirectory(binaryTree)
 add_subdirectory(front-end)
-
-add_executable(PrisonLanguage main.cpp)
-
-target_link_libraries(PrisonLanguage front-end binaryTree)
+add_subdirectory(middle-end)
+add_subdirectory(back-end)
