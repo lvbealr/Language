@@ -15,10 +15,11 @@ enum class translationError {
     BAD_FILE_NAME       = 1 << 2,
     FILE_READING_ERROR  = 1 << 3,
     BAD_BUFFER_POINTER  = 1 << 4,
+    BAD_FILE_CONTENT    = 1 << 5,
 };
 
 struct translationContext {
-    binaryTree<node<astNode> *> *AST = {};
+    binaryTree<astNode> *AST = {};
 
     Buffer<nameTableElement> *nameTable   = {};
     Buffer<localNameTable>   *localTables = {};

@@ -6,6 +6,7 @@
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 translationError readAST            (translationContext *context, const char *fileName);
+node<astNode>   *readASTInternal    (translationContext *context, Buffer<char> *fileContent, size_t *currentFilePosition);
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
