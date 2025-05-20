@@ -8,6 +8,7 @@ add_library(back-end STATIC
     src/asmTranslator.cpp
     ${CMAKE_SOURCE_DIR}/front-end/AST/src/nameTable.cpp
     IR/src/IRBasics.cpp
+    IR/src/IRGenerator.cpp
 )
 
 target_link_libraries(back-end PUBLIC customWarning binaryTree Buffer)

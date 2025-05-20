@@ -9,14 +9,14 @@
 #define INITIALIZE_MEM_(_REG_) {.type = IR_OperandType::MEM_REG, .reg = _REG_, .isImmediate = false}
 
 #define INITIALIZE_REG_(_REG_) {.type = IR_OperandType::REG, .reg    = _REG_, .isImmediate = false}
-#define INITIALIZE_IMM_(_NUM_) {.type = IR_OperandType::IMM, .number = _IMM_, .isImmediate = true}
+#define INITIALIZE_IMM_(_IMM_) {.type = IR_OperandType::IMM, .number = _IMM_, .isImmediate = true}
 
-#define INITIALIZE_MEM_PLUS_IMM_(_REG_, _IMM_)  {.type = IR_OperandType::MEM_REG_PLUS_NUM,  .value.reg = _REG_, .value.number = _IMM_, .isImmediate = false}
-#define INITIALIZE_MEM_MINUS_IMM_(_REG_, _IMM_) {.type = IR_OperandType::MEM_REG_MINUS_NUM, .value.reg = _REG_, .value.number = _IMM_, .isImmediate = false}
+#define INITIALIZE_MEM_PLUS_IMM_(_REG_, _IMM_)  {.type = IR_OperandType::MEM_REG_PLUS_IMM,  .reg = _REG_, .number = _IMM_, .isImmediate = false}
+#define INITIALIZE_MEM_MINUS_IMM_(_REG_, _IMM_) {.type = IR_OperandType::MEM_REG_MINUS_IMM, .reg = _REG_, .number = _IMM_, .isImmediate = false}
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
-#define INITIALIZE_FUNC_INDEX_(_FUNC_INDEX_) {.type = IR_OperandType::FUNC_INDEX, .value.functionIndex = _FUNC_INDEX_, .isImmediate = false}
+#define INITIALIZE_FUNC_INDEX_(_FUNC_INDEX_) {.type = IR_OperandType::FUNC_INDEX, .functionIndex = _FUNC_INDEX_, .isImmediate = false}
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
@@ -303,6 +303,16 @@
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 // ###################################################################### CMP ####################################################################### //
+
+#define CMP_REG_IMM(_REG_, _IMM_) do {                                          \
+    IR_Instruction instruction = {                                              \
+        .op           = IR_Operator::IR_CMP,                                    \
+        .operandCount = 2,                                                      \
+        .firstOperand  = INITIALIZE_REG_(_REG_),                                \
+        .secondOperand = INITIALIZE_IMM_(_IMM_)                                 \
+    };                                                                          \
+    insertNode(block->instructions, instruction);                               \
+} while (0)
 
 #define CMP_REG_REG(_REG1_, _REG2_) do {                                        \
     IR_Instruction instruction =                                                \

@@ -19,6 +19,13 @@ enum class IR_Error {
     IR_BAD_POINTER                 = 6,
     BLOCKS_LIST_BAD_POINTER        = 7,
     LABEL_BAD_POINTER              = 8,
+    GENERATE_EXPRESSION_IR_ERROR   = 9,
+    GENERATE_FUNCTION_IR_ERROR     = 10,
+    GENERATE_STATEMENT_IR_ERROR    = 11,
+    AST_BAD_STRUCTURE              = 12,
+    NODE_BAD_POINTER               = 13,
+    REGISTER_BAD_POINTER           = 14,
+    VARIABLE_NOT_FOUND             = 15,
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -100,7 +107,7 @@ struct IR_Operand {
     IR_OperandType type = {};
     
     IR_Register reg           = {};  // type = {REG | MEM_REG  | MEM_REG_PLUS_NUM | MEM_REG_MINUS_NUM}
-    size_t      number        = {};  // type = {NUM | MEM_NUM, | MEM_REG_PLUS_NUM | MEM_REG_MINUS_NUM}
+    int         number        = {};  // type = {NUM | MEM_NUM, | MEM_REG_PLUS_NUM | MEM_REG_MINUS_NUM}
     char       *label         = {};  // type = {LABEL}
     size_t      functionIndex = {};  // type = {FUNC_INDEX}
 
@@ -164,7 +171,7 @@ struct IR_Comment {
 
 IR_Error initializeBasicBlock(IR_BasicBlock *block, const char *label);
 
-IR_Error initializeIR(IR *IR, linkedList<IR_BasicBlock> *blocks);
+IR_Error initializeIR(IR *IR, linkedList<IR_BasicBlock> *blocks, IR_BasicBlock *entryPoint);
 IR_Error destroyIR   (IR *IR);
 
 IR_Error initializeIRContext(IR_Context *IRContext, translationContext *ASTContext);

@@ -127,7 +127,7 @@ IR_Error destroyRegisterAllocator(registerAllocator *allocator) {
     return IR_Error::NO_ERRORS;
 }
 
-IR_Register allocateRegister(IR_Context *context, registerAllocator *allocator, IR_BasicBlock *block) {
+IR_Register allocateRegister(IR_Context *IRContext, registerAllocator *allocator, IR_BasicBlock *block) {
     customAssert(allocator, (int) IR_Error::REGISTER_ALLOCATOR_BAD_POINTER);
     customAssert(block,     (int) IR_Error::BASIC_BLOCK_BAD_POINTER);
 
@@ -172,46 +172,40 @@ IR_Error freeRegister(registerAllocator *allocator, IR_Register reg) {
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
-IR_Error initializeIRContext(IR_Context *context, binaryTree<astNode> *AST, Buffer<nameTableElement> *nameTable, Buffer<localNameTable> *localTables, registerAllocator *regAllocator) {
-    customWarning(context, IR_Error::IR_CONTEXT_BAD_POINTER);
+IR_Error initializeIRContext(IR_Context *IRContext, translationContext *context) {
+    customWarning(IRContext, IR_Error::IR_CONTEXT_BAD_POINTER);
 
-    context->AST          = AST;
-    context->nameTable    = nameTable;
-    context->localTables  = localTables;
-    context->regAllocator = regAllocator;
+    IRContext->ASTContext = context;
+    
+    IRContext->regAllocator = (registerAllocator *)calloc(1, sizeof(registerAllocator));
+    customWarning(IRContext->regAllocator, IR_Error::ALLOCATION_ERROR);
 
-    context->representation = (IR *)calloc(1, sizeof(IR));
-    customWarning(context->representation, IR_Error::ALLOCATION_ERROR);
+    initializeRegisterAllocator(IRContext->regAllocator);
 
-    context->currentFunction = 0;
+    IRContext->representation = (IR *)calloc(1, sizeof(IR));
+    customWarning(IRContext->representation, IR_Error::ALLOCATION_ERROR);
+
+    IRContext->currentFunction = 0;
 
     return IR_Error::NO_ERRORS;
 }
 
-IR_Error destroyIRContext(IR_Context *context) {
-    customWarning(context, IR_Error::IR_CONTEXT_BAD_POINTER);
+IR_Error destroyIRContext(IR_Context *IRContext) {
+    customWarning(IRContext, IR_Error::IR_CONTEXT_BAD_POINTER);
 
-    if (context->AST) {
-        treeDestruct(context->AST);
+    if (IRContext->ASTContext) {
+        destroyTranslationContext(IRContext->ASTContext);
     }
 
-    if (context->nameTable) {
-        bufferDestruct(context->nameTable);
+    if (IRContext->regAllocator) {
+        destroyRegisterAllocator(IRContext->regAllocator);
     }
 
-    if (context->localTables) {
-        bufferDestruct(context->localTables);
+    if (IRContext->representation) {
+        destroyIR(IRContext->representation);
     }
 
-    if (context->regAllocator) {
-        destroyRegisterAllocator(context->regAllocator);
-    }
-
-    if (context->representation) {
-        destroyIR(context->representation);
-    }
-
-    context->currentFunction = 0;
+    IRContext->currentFunction = 0;
 
     return IR_Error::NO_ERRORS;
 }
