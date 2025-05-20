@@ -7,6 +7,7 @@ add_library(back-end STATIC
     src/treeReader.cpp
     src/asmTranslator.cpp
     ${CMAKE_SOURCE_DIR}/front-end/AST/src/nameTable.cpp
+    IR/src/IRBasics.cpp
 )
 
 target_link_libraries(back-end PUBLIC customWarning binaryTree Buffer)
@@ -17,6 +18,8 @@ target_include_directories(back-end PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/front-end/AST/include
     ${CMAKE_SOURCE_DIR}/front-end/
+    ${CMAKE_CURRENT_SOURCE_DIR}/IR/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/IR/linkedList/
 )
 
 add_executable(backend main.cpp)

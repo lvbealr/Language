@@ -6,6 +6,8 @@
 #include "binaryTree.h"
 #include "buffer.h"
 #include "AST.h"
+#include "asmTranslator.h"
+#include "core.h"
 
 enum class IR_Error {
     NO_ERRORS                      = 0,
@@ -145,10 +147,7 @@ struct IR {
 };
 
 struct IR_Context {
-    binaryTree<astNode> *AST = {};
-
-    Buffer<nameTableElement> *nameTable   = {};
-    Buffer<localNameTable>   *localTables = {};
+    translationContext *ASTContext = {};
 
     IR *representation = {};
 
@@ -168,8 +167,8 @@ IR_Error initializeBasicBlock(IR_BasicBlock *block, const char *label);
 IR_Error initializeIR(IR *IR, linkedList<IR_BasicBlock> *blocks);
 IR_Error destroyIR   (IR *IR);
 
-IR_Error initializeIRContext(IR_Context *context);
-IR_Error destroyIRContext   (IR_Context *context);
+IR_Error initializeIRContext(IR_Context *IRContext, translationContext *ASTContext);
+IR_Error destroyIRContext   (IR_Context *IRContext);
 
 IR_Error initializeRegisterAllocator(registerAllocator *allocator);
 IR_Error destroyRegisterAllocator   (registerAllocator *allocator);

@@ -33,7 +33,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG1_),                    \
             .secondOperand        = INITIALIZE_MEM_PLUS_IMM_(_REG2_, _IMM_),    \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -44,7 +44,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG1_),                    \
             .secondOperand        = INITIALIZE_MEM_MINUS_IMM_(_REG2_, _IMM_),   \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -55,7 +55,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG1_),                    \
             .secondOperand        = INITIALIZE_MEM_(_REG2_),                    \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -68,7 +68,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_MEM_MINUS_IMM_(_REG1_, _IMM_),   \
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -79,7 +79,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_MEM_PLUS_IMM_(_REG1_, _IMM_),    \
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -90,7 +90,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_MEM_(_REG1_),                    \
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -103,7 +103,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG1_),                    \
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0) 
@@ -116,7 +116,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_MEM_(_REG1_),                    \
             .secondOperand        = INITIALIZE_IMM_(_IMM_),                     \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -127,7 +127,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_MEM_PLUS_IMM_(_REG1_, _IMM1_),   \
             .secondOperand        = INITIALIZE_IMM_(_IMM2_),                    \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -138,7 +138,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_MEM_MINUS_IMM_(_REG1_, _IMM1_),  \
             .secondOperand        = INITIALIZE_IMM_(_IMM2_),                    \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -151,7 +151,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG_),                     \
             .secondOperand        = INITIALIZE_IMM_(_IMM_),                     \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -165,7 +165,7 @@
             .operandCount         = 1,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG_),                     \
             .secondOperand        = {},                                         \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -176,7 +176,7 @@
             .operandCount         = 1,                                          \
             .firstOperand         = INITIALIZE_IMM_(_IMM_),                     \
             .secondOperand        = {},                                         \
-            .currentFunctionIndex = context->currentFunction                    \
+            .currentFunctionIndex = IRContext->currentFunction                  \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -190,7 +190,7 @@
             .operandCount         = 1,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG_),                     \
             .secondOperand        = {},                                         \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -204,7 +204,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG1_),                    \
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -215,7 +215,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG_),                     \
             .secondOperand        = INITIALIZE_IMM_(_IMM_),                     \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -229,7 +229,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG1_),                    \
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -240,7 +240,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG_),                     \
             .secondOperand        = INITIALIZE_IMM_(_IMM_),                     \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -254,7 +254,7 @@
             .operandCount         = 1,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG_),                     \
             .secondOperand        = {},                                         \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -268,7 +268,7 @@
             .operandCount         = 1,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG_),                     \
             .secondOperand        = {},                                         \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -293,7 +293,7 @@
             .operandCount         = 1,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG_),                     \
             .secondOperand        = {},                                         \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -310,7 +310,7 @@
             .operandCount         = 2,                                          \
             .firstOperand         = INITIALIZE_REG_(_REG1_),                    \
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
@@ -346,7 +346,7 @@
             .operandCount         = 1,                                          \
             .firstOperand         = INITIALIZE_FUNC_INDEX_(_FUNC_INDEX_),       \
             .secondOperand        = {},                                         \
-            .currentFunctionIndex = context->currentFunction,                   \
+            .currentFunctionIndex = IRContext->currentFunction,                 \
         };                                                                      \
         insertNode(block->instructions, instruction);                           \
 } while (0)
