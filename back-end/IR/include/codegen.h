@@ -35,6 +35,7 @@
             .secondOperand        = INITIALIZE_MEM_PLUS_IMM_(_REG2_, _IMM_),    \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define MOV_REG_MEM_REG_MINUS_IMM(_REG1_, _REG2_, _IMM_) do {                   \
@@ -45,6 +46,7 @@
             .secondOperand        = INITIALIZE_MEM_MINUS_IMM_(_REG2_, _IMM_),   \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define MOV_REG_MEM(_REG1_, _REG2_) do {                                        \
@@ -55,6 +57,7 @@
             .secondOperand        = INITIALIZE_MEM_(_REG2_),                    \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // ----------------------------------------------------------------  MEM <- REG  --------------------------------------------------------------------- //
@@ -67,6 +70,7 @@
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define MOV_MEM_REG_PLUS_IMM_REG(_REG1_, _IMM_, _REG2_) do {                    \
@@ -77,6 +81,7 @@
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define MOV_MEM_REG(_REG1_, _REG2_) do {                                        \
@@ -87,6 +92,7 @@
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // ----------------------------------------------------------------  REG <- REG  --------------------------------------------------------------------- //
@@ -99,6 +105,7 @@
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0) 
 
 // ----------------------------------------------------------------  MEM <- IMM  --------------------------------------------------------------------- //
@@ -111,6 +118,7 @@
             .secondOperand        = INITIALIZE_IMM_(_IMM_),                     \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define MOV_MEM_REG_PLUS_IMM_IMM(_REG1_, _IMM1_, _IMM2_) do {                   \
@@ -121,6 +129,7 @@
             .secondOperand        = INITIALIZE_IMM_(_IMM2_),                    \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define MOV_MEM_REG_MINUS_IMM_IMM(_REG1_, _IMM1_, _IMM2_) do {                  \
@@ -131,6 +140,7 @@
             .secondOperand        = INITIALIZE_IMM_(_IMM2_),                    \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // ----------------------------------------------------------------  REG <- IMM  --------------------------------------------------------------------- //
@@ -143,6 +153,7 @@
             .secondOperand        = INITIALIZE_IMM_(_IMM_),                     \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -167,6 +178,7 @@
             .secondOperand        = {},                                         \
             .currentFunctionIndex = context->currentFunction                    \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -180,6 +192,7 @@
             .secondOperand        = {},                                         \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -193,6 +206,7 @@
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define ADD_REG_IMM(_REG_, _IMM_) do {                                          \
@@ -203,6 +217,7 @@
             .secondOperand        = INITIALIZE_IMM_(_IMM_),                     \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -216,6 +231,7 @@
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define SUB_REG_IMM(_REG_, _IMM_) do {                                          \
@@ -226,6 +242,7 @@
             .secondOperand        = INITIALIZE_IMM_(_IMM_),                     \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -239,6 +256,7 @@
             .secondOperand        = {},                                         \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -252,10 +270,12 @@
             .secondOperand        = {},                                         \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 #define CQO() do {                                                              \
     IR_Instruction instruction = INITIALIZE_OPERATION(IR_Operator::IR_CQO);     \
+    insertNode(block->instructions, instruction);                               \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -275,6 +295,7 @@
             .secondOperand        = {},                                         \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -291,6 +312,7 @@
             .secondOperand        = INITIALIZE_REG_(_REG2_),                    \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -307,10 +329,12 @@
 
 #define JMP() do {                                                              \
     IR_Instruction instruction = INITIALIZE_OPERATION(IR_Operator::IR_JMP);     \
+    insertNode(block->instructions, instruction);                               \
 } while (0)
 
 #define JMP_CONDITION(_JMP_) do {                                               \
     IR_Instruction instruction = INITIALIZE_OPERATION(_JMP_);                   \
+    insertNode(block->instructions, instruction);                               \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -324,6 +348,7 @@
             .secondOperand        = {},                                         \
             .currentFunctionIndex = context->currentFunction,                   \
         };                                                                      \
+        insertNode(block->instructions, instruction);                           \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -331,6 +356,7 @@
 
 #define RET() do {                                                              \
     IR_Instruction instruction = INITIALIZE_OPERATION(IR_Operator::IR_RET);     \
+    insertNode(block->instructions, instruction);                               \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -338,6 +364,7 @@
 
 #define IN() do {                                                               \
     IR_Instruction instruction = INITIALIZE_OPERATION(IR_Operator::IR_IN);      \
+    insertNode(block->instructions, instruction);                               \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -345,6 +372,7 @@
 
 #define OUT() do {                                                              \
     IR_Instruction instruction = INITIALIZE_OPERATION(IR_Operator::IR_OUT);     \
+    insertNode(block->instructions, instruction);                               \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -352,6 +380,7 @@
 
 #define SYSCALL() do {                                                          \
     IR_Instruction instruction = INITIALIZE_OPERATION(IR_Operator::IR_SYSCALL); \
+    insertNode(block->instructions, instruction);                               \
 } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
