@@ -24,7 +24,7 @@ enum class translationError {
     NAME_TABLE_ERROR     = 1 << 10,
 };
 
-const size_t INITIAL_ADDRESS = 0xBADBABE;
+const size_t INITIAL_ADDRESS = 0x10000;
 
 struct operatorCounters {
     size_t assignmentCount = 0;

@@ -26,6 +26,8 @@ struct nameTableElement {
     char    *name    = NULL;
     nameType type    = nameType::IDENTIFIER;
     Keyword  keyword = Keyword::UNDEFINED;
+
+    size_t rbpOffset = 0;
 };
 
 enum class localNameType {

@@ -31,7 +31,8 @@ struct astNode {
     int      line  = 0;
     char    *file  = NULL;
 
-    size_t   rbpOffset = {};
+    size_t   localTableOtherElementsCount = 0;
+    int      rbpOffset = {};
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //

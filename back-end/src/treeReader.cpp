@@ -67,6 +67,8 @@ static translationError readIdentifierID(translationContext *context, Buffer<cha
     sscanf(fileContent->data + (*currentFilePosition), "%lu%n", &node->data.data.nameTableIndex, &identifierLength);
     (*currentFilePosition) += identifierLength;
 
+    node->data.localTableOtherElementsCount = context->localTables->data[node->data.data.nameTableIndex].elements.currentIndex;
+
     return translationError::NO_ERRORS;
 }
 
