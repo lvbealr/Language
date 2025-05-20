@@ -42,6 +42,8 @@ bufferError addLocalIdentifier(int nameTableIndex, Buffer<localNameTable> *local
 
     localTables->data[nameTableIndex].size += idSize;
 
+    newElement.rbpOffset = localTables->data[nameTableIndex].size * 8;
+
     return writeDataToBuffer(&localTables->data[nameTableIndex].elements, &newElement, 1);
 }
 

@@ -38,6 +38,8 @@ enum class localNameType {
 struct localNameTableElement {
     localNameType type         = localNameType::VARIABLE_IDENTIFIER;
     size_t        globalNameID = 0;
+
+    size_t        rbpOffset    = 0;
 };
 
 struct localNameTable {
