@@ -16,7 +16,7 @@ IR_Error initializeBasicBlock(IR_BasicBlock *block, const char *label) {
     block->instructions = (linkedList<IR_Instruction> *)calloc(1, sizeof(linkedList<IR_Instruction>));
     customWarning(block->instructions, IR_Error::BASIC_BLOCK_BAD_POINTER);
     initializeLinkedList(block->instructions, 0);
-    
+
     block->instructionCount = 0;
 
     block->successors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
@@ -42,6 +42,8 @@ IR_Error initializeIR(IR *IR, linkedList<IR_BasicBlock> *blocks, IR_BasicBlock *
 
     IR->entryPointIndex = 0;
     IR->entryPoint      = entryPoint;
+    
+    insertNode(blocks, *entryPoint);
 
     IR->totalInstructionCount = 0;
 
