@@ -6,6 +6,7 @@
 #include "buffer.h"
 #include "nameTable.h"
 #include <stdbool.h>
+#include <map>
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
@@ -49,6 +50,8 @@ struct translationContext {
     bool callParameters = false;
 
     const size_t initialAddress = INITIAL_ADDRESS;
+
+    std::map<size_t, size_t> functionToLocalTable;
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //

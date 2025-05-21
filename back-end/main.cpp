@@ -6,10 +6,11 @@
 #include "asmTranslator.h"
 #include "IRBasics.h"
 #include "linkedListAddons.h"
+#include "IRGenerator.h"
 
 int main() {
-    const char *ASTFileName = "20.04.2025-23:50:35.AST";
-    const char *NTFileName  = "20.04.2025-23:50:35.nameTable";
+    const char *ASTFileName = "21.04.2025-21:03:35.AST";
+    const char *NTFileName  = "21.04.2025-21:03:35.nameTable";
 
     translationContext ASTContext = {};
     initializeTranslationContext(&ASTContext);
@@ -19,6 +20,10 @@ int main() {
     
     readNameTable(&ASTContext, NTFileName);
     readAST      (&ASTContext, ASTFileName);
+
+    generateIR(&IRContext);
+
+    printIR(IRContext.representation);
 
     dumpContext dumpContext = {};
     initializeDumpContext(&dumpContext, "output.dot");

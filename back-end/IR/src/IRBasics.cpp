@@ -4,6 +4,7 @@
 #include "linkedListAddons.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
@@ -11,21 +12,21 @@ IR_Error initializeBasicBlock(IR_BasicBlock *block, const char *label) {
     customWarning(block, IR_Error::BASIC_BLOCK_BAD_POINTER);
     customWarning(label, IR_Error::LABEL_BAD_POINTER);
 
-    block->label = (char *)label;
+    block->label = strdup(label);
 
     block->instructions = (linkedList<IR_Instruction> *)calloc(1, sizeof(linkedList<IR_Instruction>));
     customWarning(block->instructions, IR_Error::BASIC_BLOCK_BAD_POINTER);
-    initializeLinkedList(block->instructions, 0);
+    initializeLinkedList(block->instructions, 10);
 
     block->instructionCount = 0;
 
     block->successors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
     customWarning(block->successors, IR_Error::BASIC_BLOCK_BAD_POINTER);
-    initializeLinkedList(block->successors, 0);
+    initializeLinkedList(block->successors, 10);
 
     block->predecessors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
     customWarning(block->predecessors, IR_Error::BASIC_BLOCK_BAD_POINTER);
-    initializeLinkedList(block->predecessors, 0);
+    initializeLinkedList(block->predecessors, 10);
 
     block->functionIndex = 0;
 
@@ -34,7 +35,7 @@ IR_Error initializeBasicBlock(IR_BasicBlock *block, const char *label) {
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
-IR_Error initializeIR(IR *IR, linkedList<IR_BasicBlock> *blocks, IR_BasicBlock *entryPoint) {
+IR_Error initializeIR(IR *IR, linkedList<IR_BasicBlock *> *blocks, IR_BasicBlock *entryPoint) {
     customWarning(IR,     IR_Error::IR_BAD_POINTER);
     customWarning(blocks, IR_Error::BLOCKS_LIST_BAD_POINTER);
 
@@ -42,8 +43,8 @@ IR_Error initializeIR(IR *IR, linkedList<IR_BasicBlock> *blocks, IR_BasicBlock *
 
     IR->entryPointIndex = 0;
     IR->entryPoint      = entryPoint;
-    
-    insertNode(blocks, *entryPoint);
+
+    insertNode(blocks, entryPoint);
 
     IR->totalInstructionCount = 0;
 
@@ -72,7 +73,7 @@ IR_Error destroyIR(IR *IR) {
 IR_Error initializeRegisterAllocator(registerAllocator *allocator) {
     customWarning(allocator, IR_Error::REGISTER_ALLOCATOR_BAD_POINTER);
     
-    allocator->registers = (IR_Register []){
+    IR_Register availableRegs[] = {
         IR_Register::RAX,
         IR_Register::RBX,
         IR_Register::RCX,
@@ -89,8 +90,12 @@ IR_Error initializeRegisterAllocator(registerAllocator *allocator) {
         IR_Register::R15
     };
 
-    allocator->count = sizeof(allocator->registers) / sizeof(IR_Register);
-    
+    allocator->count = sizeof(availableRegs) / sizeof(IR_Register);
+    allocator->registers = (IR_Register *)calloc(allocator->count, sizeof(IR_Register));
+    customWarning(allocator->registers, IR_Error::ALLOCATION_ERROR);
+
+    memcpy(allocator->registers, availableRegs, allocator->count * sizeof(IR_Register));
+
     allocator->used = (bool *)calloc(allocator->count, sizeof(bool));
     customWarning(allocator->used, IR_Error::ALLOCATION_ERROR);
 
@@ -144,7 +149,6 @@ IR_Register allocateRegister(IR_Context *IRContext, registerAllocator *allocator
     for (size_t i = 0; i < allocator->count; i++) {
         if (!allocator->used[i]) {
             allocator->used[i] = true;
-            
             return allocator->registers[i];
         }
     }

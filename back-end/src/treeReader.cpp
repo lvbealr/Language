@@ -171,6 +171,8 @@ translationError readNameTable(translationContext *context, const char *fileName
     for (size_t localTableIndex = 0; localTableIndex < localTablesCount; localTableIndex++) {
         addLocalNameTable(localTableIndex, context->localTables);
         readLocalNameTable(context, localTableIndex, &fileContent, &currentFilePosition);
+        size_t nameTableID = context->localTables->data[localTableIndex].nameTableID;
+        context->functionToLocalTable[nameTableID] = localTableIndex;
     }
 
     return translationError::NO_ERRORS;
@@ -202,12 +204,12 @@ translationError readGlobalNameTable(translationContext *context, Buffer<char> *
 }
 
 translationError readLocalNameTable(translationContext *context, size_t localTableIndex, Buffer<char> *fileContent, size_t *currentFilePosition) {
-    customWarning(context,             translationError::CONTEXT_BAD_POINTER);
-    customWarning(fileContent,         translationError::BUFFER_BAD_POINTER);;
+    customWarning(context, translationError::CONTEXT_BAD_POINTER);
+    customWarning(fileContent, translationError::BUFFER_BAD_POINTER);
 
-    size_t localNameTableSize       = 0;
-    int    localNameTableID         = 0;
-    int    localNameTableSizeLength = 0;
+    size_t localNameTableSize = 0;
+    int localNameTableID = 0;
+    int localNameTableSizeLength = 0;
 
     sscanf(fileContent->data + (*currentFilePosition), "%lu %d%n", &localNameTableSize, &localNameTableID, &localNameTableSizeLength);
     (*currentFilePosition) += localNameTableSizeLength;
@@ -216,14 +218,18 @@ translationError readLocalNameTable(translationContext *context, size_t localTab
 
     for (size_t elementIndex = 0; elementIndex < localNameTableSize; elementIndex++) {
         size_t globalNameTableElementID = 0;
-        size_t elementType              = 0;
-        int    lineLength               = 0;
+        size_t elementType = 0;
+        int lineLength = 0;
 
         sscanf(fileContent->data + (*currentFilePosition), "%lu %lu%n", &globalNameTableElementID, &elementType, &lineLength);
         (*currentFilePosition) += lineLength;
 
-        addLocalIdentifier(localTableIndex, context->localTables, 
-            localNameTableElement {.type = static_cast<localNameType>(elementType), .globalNameID = globalNameTableElementID}, 1);
+        localNameTableElement element = {
+            .type = static_cast<localNameType>(elementType),
+            .globalNameID = globalNameTableElementID,
+            .rbpOffset = 0
+        };
+        addLocalIdentifier(localTableIndex, context->localTables, element, 1);
     }
 
     return translationError::NO_ERRORS;

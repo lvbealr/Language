@@ -3,7 +3,6 @@
 
 #include "IRBasics.h"
 
-// TODO: add all instruction to the instruction list
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 #define INITIALIZE_MEM_(_REG_) {.type = IR_OperandType::MEM_REG, .reg = _REG_, .isImmediate = false}

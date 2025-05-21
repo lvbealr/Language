@@ -8,6 +8,7 @@
 #include "AST.h"
 #include "asmTranslator.h"
 #include "core.h"
+#include <map>
 
 enum class IR_Error {
     NO_ERRORS                      = 0,
@@ -27,6 +28,7 @@ enum class IR_Error {
     REGISTER_BAD_POINTER           = 14,
     VARIABLE_NOT_FOUND             = 15,
     NOT_IMPLEMENTED                = 16,
+    LOCAL_TABLE_NOT_FOUND          = 17,
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -146,7 +148,7 @@ struct IR_BasicBlock {
 };
 
 struct IR {
-    linkedList<IR_BasicBlock> *basicBlocks = {};    // basic blocks
+    linkedList<IR_BasicBlock *> *basicBlocks = {};    // basic blocks
 
     size_t         entryPointIndex = {};            // entry point index
     IR_BasicBlock *entryPoint = {};                 // entry point basic block
@@ -162,6 +164,7 @@ struct IR_Context {
     registerAllocator *regAllocator = {};
 
     size_t currentFunction = {};
+    bool hasReturn = {};
 };
 
 struct IR_Comment {
