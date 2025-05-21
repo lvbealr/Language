@@ -26,6 +26,7 @@ enum class IR_Error {
     NODE_BAD_POINTER               = 13,
     REGISTER_BAD_POINTER           = 14,
     VARIABLE_NOT_FOUND             = 15,
+    NOT_IMPLEMENTED                = 16,
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -37,8 +38,8 @@ enum class IR_Operator {
     IR_POP,
     IR_ADD,
     IR_SUB,
-    IR_MUL,
-    IR_DIV,
+    IR_IMUL,
+    IR_IDIV,
     IR_CQO,
     IR_SIN,
     IR_COS,
@@ -180,7 +181,7 @@ IR_Error destroyIRContext   (IR_Context *IRContext);
 IR_Error initializeRegisterAllocator(registerAllocator *allocator);
 IR_Error destroyRegisterAllocator   (registerAllocator *allocator);
 
-IR_Register allocateRegister(registerAllocator *allocator, IR_BasicBlock *block);
+IR_Register allocateRegister(IR_Context *IRContext, registerAllocator *allocator, IR_BasicBlock *block);
 IR_Error    freeRegister    (registerAllocator *allocator, IR_Register    reg);
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
