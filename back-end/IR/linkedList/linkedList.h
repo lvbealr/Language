@@ -48,17 +48,15 @@ template<typename T>
 linkedListError initializeLinkedList(linkedList<T> *list, size_t capacity) {
     customWarning(list, linkedListError::LIST_BAD_POINTER);
 
-    list->capacity = (ssize_t)capacity + 1;
+    list->capacity = (capacity == 0) ? 2 : capacity + 1;
 
     list->data = (T *)calloc((size_t)list->capacity, sizeof(T));
     customWarning(list->data, linkedListError::DATA_BAD_POINTER);
 
     list->prev = (ssize_t *)calloc((size_t)list->capacity, sizeof(ssize_t));
-
     CHECK_FOR_NULL(list->prev, FREE_(list->data); customWarning(list->prev, linkedListError::PREVIOUS_BAD_POINTER));
 
     list->next = (ssize_t *)calloc((size_t)list->capacity, sizeof(ssize_t));
-
     CHECK_FOR_NULL(list->next,
                    FREE_(list->data);
                    FREE_(list->prev);
@@ -88,8 +86,8 @@ linkedListError destroyLinkedList(linkedList<T> *list) {
 
     list->capacity = -1;
     list->freeNode = -1;
-    list->newIndex =  0;
-    list->size     =  0;
+    list->newIndex = 0;
+    list->size     = 0;
 
     customWarning(list->data, linkedListError::DATA_BAD_POINTER);
     FREE_(list->data);
@@ -104,39 +102,40 @@ linkedListError destroyLinkedList(linkedList<T> *list) {
 }
 
 #ifndef NDEBUG
-    template<typename T>
-    linkedListError verifyLinkedList(linkedList<T> *list) {
-        customWarning(list, linkedListError::LIST_BAD_POINTER);
-    
-        customWarning(list->data, linkedListError::DATA_BAD_POINTER);
-        customWarning(list->prev, linkedListError::PREVIOUS_BAD_POINTER);
-        customWarning(list->next, linkedListError::NEXT_BAD_POINTER);
+template<typename T>
+linkedListError verifyLinkedList(linkedList<T> *list) {
+    customWarning(list, linkedListError::LIST_BAD_POINTER);
 
-        customWarning(list->capacity >= 0, linkedListError::BAD_CAPACITY);
+    customWarning(list->data, linkedListError::DATA_BAD_POINTER);
+    customWarning(list->prev, linkedListError::PREVIOUS_BAD_POINTER);
+    customWarning(list->next, linkedListError::NEXT_BAD_POINTER);
 
-        customWarning(list->next[0] >= 0 && list->next[0] < list->capacity, linkedListError::BAD_HEAD);
-        customWarning(list->prev[0] >= 0 && list->prev[0] < list->capacity, linkedListError::BAD_TAIL);
+    customWarning(list->capacity > 0, linkedListError::BAD_CAPACITY);
 
-        ssize_t freeIndex = list->freeNode;
+    customWarning(list->next[0] >= 0 && list->next[0] < list->capacity, linkedListError::BAD_HEAD);
+    customWarning(list->prev[0] >= 0 && list->prev[0] < list->capacity, linkedListError::BAD_TAIL);
 
-        while (freeIndex) {
-            customWarning(list->prev[freeIndex] == -1, linkedListError::BAD_FREE_NODE);
-            freeIndex = list->next[freeIndex];
-        }
+    ssize_t freeIndex = list->freeNode;
 
-        return linkedListError::NO_ERRORS;
+    while (freeIndex > 0) {
+        customWarning(freeIndex < list->capacity, linkedListError::BAD_FREE_NODE);
+        customWarning(list->prev[freeIndex] == -1, linkedListError::BAD_FREE_NODE);
+        freeIndex = list->next[freeIndex];
     }
+
+    return linkedListError::NO_ERRORS;
+}
 #endif
 
 template<typename T>
 linkedListError resizeList(linkedList<T> *list) {
     customWarning(list, linkedListError::LIST_BAD_POINTER);
 
-    ssize_t newCapacity = -1;
+    ssize_t newCapacity = list->capacity;
 
     if (list->size >= list->capacity - 1) {
-        newCapacity = list->capacity * 2;
-    } else if (list->size < (list->capacity - 1) / 4 && list->capacity > 1) {
+        newCapacity = (list->capacity == 0) ? 2 : list->capacity * 2;
+    } else if (list->size < (list->capacity - 1) / 4 && list->capacity > 2) {
         newCapacity = list->capacity / 2;
     } else {
         return linkedListError::NO_ERRORS;
@@ -161,7 +160,7 @@ linkedListError resizeList(linkedList<T> *list) {
             list->next[nodeIndex] = nodeIndex + 1;
             list->prev[nodeIndex] = -1;
         }
-
+        
         list->next[newCapacity - 1] = 0;
         list->prev[newCapacity - 1] = -1;
 
@@ -170,7 +169,7 @@ linkedListError resizeList(linkedList<T> *list) {
         } else {
             ssize_t lastFree = list->freeNode;
 
-            while (list->next[lastFree] != 0) {
+            while (list->next[lastFree] != 0 && list->next[lastFree] < list->capacity) {
                 lastFree = list->next[lastFree];
             }
 
@@ -180,9 +179,9 @@ linkedListError resizeList(linkedList<T> *list) {
 
     list->capacity = newCapacity;
 
-    #ifndef NDEBUG
-        verifyLinkedList(list);
-    #endif
+#ifndef NDEBUG
+    verifyLinkedList(list);
+#endif
 
     return linkedListError::NO_ERRORS;
 }
@@ -193,7 +192,6 @@ linkedListError destroyNode(T node) {
         FREE_(node->data);
         FREE_(node);
     }
-
     return linkedListError::NO_ERRORS;
 }
 

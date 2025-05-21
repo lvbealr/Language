@@ -5,8 +5,7 @@
 #include "IRBasics.h"
 #include "customWarning.h"
 
-inline linkedListError destroyOperand(IR_Operand *operand)
-{
+inline linkedListError destroyOperand(IR_Operand *operand) {
     if (operand->type == IR_OperandType::LABEL && operand->label) {
         FREE_(operand->label);
     }
@@ -61,7 +60,7 @@ template<>
 inline linkedListError insertNode<IR_Instruction>(linkedList<IR_Instruction> *list, IR_Instruction data) {
     customWarning(list, linkedListError::LIST_BAD_POINTER);
 
-    if (list->freeNode == 0) {
+    if (list->freeNode == 0 || list->freeNode >= list->capacity) {
         linkedListError resizeError = resizeList(list);
         CHECK_FOR_NULL(resizeError == linkedListError::NO_ERRORS, return resizeError);
     }
@@ -129,11 +128,10 @@ inline linkedListError deleteNode<IR_Instruction>(linkedList<IR_Instruction> *li
 
         if (nextIndex != 0) {
             list->data[nextIndex].prevInstruction = &list->data[prevIndex];
-        }
-
-        else {
+        } else {
             list->data[prevIndex].nextInstruction = NULL;
         }
+
     } else {
         list->next[0] = nextIndex;
     }
@@ -181,7 +179,7 @@ template<>
 inline linkedListError insertNode<IR_BasicBlock>(linkedList<IR_BasicBlock> *list, IR_BasicBlock data) {
     customWarning(list, linkedListError::LIST_BAD_POINTER);
 
-    if (list->freeNode == 0) {
+    if (list->freeNode == 0 || list->freeNode >= list->capacity) {
         linkedListError resizeError = resizeList(list);
         CHECK_FOR_NULL(resizeError == linkedListError::NO_ERRORS, return resizeError);
     }
@@ -197,11 +195,9 @@ inline linkedListError insertNode<IR_BasicBlock>(linkedList<IR_BasicBlock> *list
     list->data[newNodeIndex].instructions = (linkedList<IR_Instruction> *)calloc(1, sizeof(linkedList<IR_Instruction>));
     CHECK_FOR_NULL(list->data[newNodeIndex].instructions,
                    destroyBasicBlock(&list->data[newNodeIndex]);
-
                    list->prev[newNodeIndex] = -1;
                    list->next[newNodeIndex] = list->freeNode;
                    list->freeNode = newNodeIndex;
-
                    return linkedListError::DATA_BAD_POINTER);
 
     linkedListError initError = initializeLinkedList(list->data[newNodeIndex].instructions, 10);
@@ -209,75 +205,55 @@ inline linkedListError insertNode<IR_BasicBlock>(linkedList<IR_BasicBlock> *list
     CHECK_FOR_NULL(initError == linkedListError::NO_ERRORS,
                    FREE_(list->data[newNodeIndex].instructions);
                    destroyBasicBlock(&list->data[newNodeIndex]);
-
                    list->prev[newNodeIndex] = -1;
                    list->next[newNodeIndex] = list->freeNode;
                    list->freeNode = newNodeIndex;
-
                    return initError);
 
     list->data[newNodeIndex].successors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
-
     CHECK_FOR_NULL(list->data[newNodeIndex].successors,
                    destroyLinkedList(list->data[newNodeIndex].instructions);
                    FREE_(list->data[newNodeIndex].instructions);
-
                    destroyBasicBlock(&list->data[newNodeIndex]);
-
                    list->prev[newNodeIndex] = -1;
                    list->next[newNodeIndex] = list->freeNode;
                    list->freeNode = newNodeIndex;
-
                    return linkedListError::DATA_BAD_POINTER);
 
     initError = initializeLinkedList(list->data[newNodeIndex].successors, 2);
-
     CHECK_FOR_NULL(initError == linkedListError::NO_ERRORS,
                    FREE_(list->data[newNodeIndex].successors);
                    destroyLinkedList(list->data[newNodeIndex].instructions);
-
                    FREE_(list->data[newNodeIndex].instructions);
                    destroyBasicBlock(&list->data[newNodeIndex]);
-
                    list->prev[newNodeIndex] = -1;
                    list->next[newNodeIndex] = list->freeNode;
                    list->freeNode = newNodeIndex;
-
                    return initError);
 
     list->data[newNodeIndex].predecessors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
-
     CHECK_FOR_NULL(list->data[newNodeIndex].predecessors,
                    destroyLinkedList(list->data[newNodeIndex].successors);
                    FREE_(list->data[newNodeIndex].successors);
-
                    destroyLinkedList(list->data[newNodeIndex].instructions);
                    FREE_(list->data[newNodeIndex].instructions);
-
                    destroyBasicBlock(&list->data[newNodeIndex]);
-
                    list->prev[newNodeIndex] = -1;
                    list->next[newNodeIndex] = list->freeNode;
                    list->freeNode = newNodeIndex;
-
                    return linkedListError::DATA_BAD_POINTER);
 
     initError = initializeLinkedList(list->data[newNodeIndex].predecessors, 2);
-
     CHECK_FOR_NULL(initError == linkedListError::NO_ERRORS,
                    FREE_(list->data[newNodeIndex].predecessors);
                    destroyLinkedList(list->data[newNodeIndex].successors);
-
                    FREE_(list->data[newNodeIndex].successors);
                    destroyLinkedList(list->data[newNodeIndex].instructions);
-
                    FREE_(list->data[newNodeIndex].instructions);
                    destroyBasicBlock(&list->data[newNodeIndex]);
-
                    list->prev[newNodeIndex] = -1;
                    list->next[newNodeIndex] = list->freeNode;
                    list->freeNode = newNodeIndex;
-
                    return initError);
 
     ssize_t insertAfter = list->newIndex;
