@@ -25,12 +25,23 @@ static const Keyword    operations[][6]   = {{},
                                              {Keyword::EQUAL, Keyword::GREATER_OR_EQUAL, Keyword::LESS_OR_EQUAL, Keyword::GREATER, Keyword::LESS, Keyword::NOT_EQUAL},
                                              {Keyword::AND,   Keyword::OR}};
                                              
-// -------------------------------------------------------------------------------------------------------------------------------------------------- //
+// ------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 #define IS_NULL(EXPRESSION, RET_POINTER) {   \
     if (!(EXPRESSION)) {                     \
         return RET_POINTER;                  \
     }                                        \
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------- //
+
+size_t getKeywordIndex(compilationContext *context, Keyword keyword) {
+    for (size_t i = 0; i < context->nameTable->currentIndex; i++) {
+        if (context->nameTable->data[i].keyword == keyword) {
+            return i;
+        }
+    }
+    return 0;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -251,12 +262,12 @@ static node<astNode> *getTranslationUnit(compilationContext *context) {
                   context->nameTable->data[currentNameTableIndex].keyword == Keyword::OPERATOR_SEPARATOR,
                   compilationError::OPERATOR_SEPARATOR_EXPECTED);
 
-    currentToken->left          = externalDeclaration;
-    externalDeclaration->parent = currentToken;
-
-    node<astNode> *root = currentToken;
-
+    node<astNode> *separator = currentToken;
     ++context->tokenIndex;
+
+    _OPERATOR_SEPARATOR_(separator, externalDeclaration, NULL);
+
+    node<astNode> *root = separator;
 
     if (currentToken->data.type != nodeType::TERMINATOR) {
         root->right = getTranslationUnit(context);
@@ -404,14 +415,40 @@ static node<astNode> *getOperator(compilationContext *context, int localNameTabl
     CHECK_FOR_ERROR(expectedOperator, compilationError::IF_EXPECTED);
 
     if (expectedOperator) {
-        return _OPERATOR_SEPARATOR_(expectedOperator, NULL);
+        size_t separatorIndex = getKeywordIndex(context, Keyword::OPERATOR_SEPARATOR);
+        node<astNode> *separator = emplaceNode(node<astNode>
+            {
+                .data = {
+                    .type = nodeType::STRING,
+                    .data = {.nameTableIndex = separatorIndex},
+                    .line = context->currentLine
+                },
+                .left = expectedOperator,
+                .right = NULL,
+                .parent = NULL
+            });
+        if (expectedOperator) expectedOperator->parent = separator;
+        return separator;
     }
 
     expectedOperator = getConditionOperator(context, Keyword::WHILE, compilationError::WHILE_EXPECTED, localNameTableID);
     CHECK_FOR_ERROR(expectedOperator, compilationError::WHILE_EXPECTED);
 
     if (expectedOperator) {
-        return _OPERATOR_SEPARATOR_(expectedOperator, NULL);
+        size_t separatorIndex = getKeywordIndex(context, Keyword::OPERATOR_SEPARATOR);
+        node<astNode> *separator = emplaceNode(node<astNode>
+            {
+                .data = {
+                    .type = nodeType::STRING,
+                    .data = {.nameTableIndex = separatorIndex},
+                    .line = context->currentLine
+                },
+                .left = expectedOperator,
+                .right = NULL,
+                .parent = NULL
+            });
+        if (expectedOperator) expectedOperator->parent = separator;
+        return separator;
     }
 
     #define GET_EXPECTED_OPERATOR(FUNCTION, ERROR)              \
@@ -443,8 +480,24 @@ static node<astNode> *getOperator(compilationContext *context, int localNameTabl
     node<astNode> *separator = getKeyword(context, Keyword::OPERATOR_SEPARATOR, compilationError::OPERATOR_SEPARATOR_EXPECTED);
     customWarning(separator, NULL);
 
-    separator->left          = expectedOperator;
-    expectedOperator->parent = separator;
+    if (!separator) {
+        size_t separatorIndex = getKeywordIndex(context, Keyword::OPERATOR_SEPARATOR);
+        separator = emplaceNode(node<astNode>
+            {
+                .data = {
+                    .type = nodeType::STRING,
+                    .data = {.nameTableIndex = separatorIndex},
+                    .line = context->currentLine
+                },
+                .left = expectedOperator,
+                .right = NULL,
+                .parent = NULL
+            });
+        if (expectedOperator) expectedOperator->parent = separator;
+        return separator;
+    }
+
+    _OPERATOR_SEPARATOR_(separator, expectedOperator, NULL);
 
     return separator;
 }
@@ -552,17 +605,26 @@ static node<astNode> *getArgumentList(compilationContext *context, int localName
 
     if (!separator) {
         context->errorBuffer->currentIndex--;
-        return _ARGUMENTS_SEPARATOR_(argument, NULL);
+        size_t separatorIndex = getKeywordIndex(context, Keyword::ARGUMENT_SEPARATOR);
+        separator = emplaceNode(node<astNode>
+            {
+                .data = {
+                    .type = nodeType::STRING,
+                    .data = {.nameTableIndex = separatorIndex},
+                    .line = context->currentLine
+                },
+                .left = argument,
+                .right = NULL,
+                .parent = NULL
+            });
+        if (argument) argument->parent = separator;
+        return separator;
     }
 
     node<astNode> *nextArgument = getArgumentList(context, localNameTableID);
     IS_NULL(nextArgument, NULL);
 
-    separator->left      = argument;
-    argument->parent     = separator;
-
-    separator->right     = nextArgument;
-    nextArgument->parent = separator;
+    _ARGUMENTS_SEPARATOR_(separator, argument, nextArgument);
 
     return separator;
 }
@@ -577,17 +639,26 @@ static node<astNode> *getParameterList(compilationContext *context, int localNam
 
     if (!separator) {
         context->errorBuffer->currentIndex--;
-        return _ARGUMENTS_SEPARATOR_(parameter, NULL);
+        size_t separatorIndex = getKeywordIndex(context, Keyword::ARGUMENT_SEPARATOR);
+        separator = emplaceNode(node<astNode>
+            {
+                .data = {
+                    .type = nodeType::STRING,
+                    .data = {.nameTableIndex = separatorIndex},
+                    .line = context->currentLine
+                },
+                .left = parameter,
+                .right = NULL,
+                .parent = NULL
+            });
+        if (parameter) parameter->parent = separator;
+        return separator;
     }
 
     node<astNode> *nextParameter = getParameterList(context, localNameTableID);
     IS_NULL(nextParameter, NULL);
 
-    separator->left       = parameter;
-    parameter->parent     = separator;
-
-    separator->right      = nextParameter;
-    nextParameter->parent = separator;
+    _ARGUMENTS_SEPARATOR_(separator, parameter, nextParameter);
 
     return separator;
 }

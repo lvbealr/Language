@@ -118,30 +118,20 @@ struct astNode {
         .parent = NULL                                  \
         }                                               \
     )
+#define _OPERATOR_SEPARATOR_(SEPARATOR, LEFT, RIGHT)    \
+    do {                                                \
+        SEPARATOR->left = LEFT;                         \
+        SEPARATOR->right = RIGHT;                       \
+        if (LEFT) LEFT->parent = SEPARATOR;             \
+    } while (0)
 
-#define _OPERATOR_SEPARATOR_(LEFT, RIGHT)               \
-    emplaceNode(node<astNode>                           \
-        {.data =                                        \
-            {.type = nodeType::STRING,                  \
-             .data = {.nameTableIndex = 0}              \
-            },                                          \
-        .left   = LEFT,                                 \
-        .right  = RIGHT,                                \
-        .parent = NULL                                  \
-        }                                               \
-    )
-
-#define _ARGUMENTS_SEPARATOR_(LEFT, RIGHT)              \
-    emplaceNode(node<astNode>                           \
-        {.data =                                        \
-            {.type = nodeType::STRING,                  \
-             .data = {.nameTableIndex = 1}              \
-            },                                          \
-        .left   = LEFT,                                 \
-        .right  = RIGHT,                                \
-        .parent = NULL                                  \
-        }                                               \
-    )
+#define _ARGUMENTS_SEPARATOR_(SEPARATOR, LEFT, RIGHT)   \
+    do {                                                \
+        SEPARATOR->left   = LEFT;                       \
+        SEPARATOR->right  = RIGHT;                      \
+        if (LEFT) LEFT->parent = SEPARATOR;             \
+        if (RIGHT) RIGHT->parent = SEPARATOR;           \
+    } while (0)
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
