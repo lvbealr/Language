@@ -13,10 +13,18 @@ IR_Error initializeBasicBlock(IR_BasicBlock *block, const char *label) {
 
     block->label = (char *)label;
 
+    block->instructions = (linkedList<IR_Instruction> *)calloc(1, sizeof(linkedList<IR_Instruction>));
+    customWarning(block->instructions, IR_Error::BASIC_BLOCK_BAD_POINTER);
     initializeLinkedList(block->instructions, 0);
+    
     block->instructionCount = 0;
 
+    block->successors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
+    customWarning(block->successors, IR_Error::BASIC_BLOCK_BAD_POINTER);
     initializeLinkedList(block->successors, 0);
+
+    block->predecessors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
+    customWarning(block->predecessors, IR_Error::BASIC_BLOCK_BAD_POINTER);
     initializeLinkedList(block->predecessors, 0);
 
     block->functionIndex = 0;
