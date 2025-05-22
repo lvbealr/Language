@@ -9,6 +9,8 @@ add_library(back-end STATIC
     ${CMAKE_SOURCE_DIR}/front-end/AST/src/nameTable.cpp
     IR/src/IRBasics.cpp
     IR/src/IRGenerator.cpp
+    IR/src/ASMGenerator.cpp
+    IR/src/debugUtils.cpp
 )
 
 target_link_libraries(back-end PUBLIC customWarning binaryTree Buffer)
