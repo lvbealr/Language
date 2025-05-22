@@ -8,7 +8,8 @@
 #include "AST.h"
 #include "asmTranslator.h"
 #include "core.h"
-#include <map>
+#include <string>
+#include <unordered_map>
 
 enum class IR_Error {
     NO_ERRORS                      = 0,
@@ -29,6 +30,7 @@ enum class IR_Error {
     VARIABLE_NOT_FOUND             = 15,
     NOT_IMPLEMENTED                = 16,
     LOCAL_TABLE_NOT_FOUND          = 17,
+    IO_ERROR                       = 18,
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -141,8 +143,8 @@ struct IR_BasicBlock {
     linkedList<IR_Instruction> *instructions = {};  // instructions in the block
     size_t instructionCount = {};                   // instructions count in the block 
 
-    linkedList<IR_BasicBlock> *successors   = {};   // next blocks     (control flow graph)
-    linkedList<IR_BasicBlock> *predecessors = {};   // previous blocks (control flow graph)
+    linkedList<IR_BasicBlock *> *successors   = {};   // next blocks     (control flow graph)
+    linkedList<IR_BasicBlock *> *predecessors = {};   // previous blocks (control flow graph)
 
     size_t functionIndex = {};                      // function index
 };
@@ -165,6 +167,8 @@ struct IR_Context {
 
     size_t currentFunction = {};
     bool hasReturn = {};
+    std::map<std::string, size_t> functionNameToIndex;
+    std::unordered_map<size_t, IR_Register> variableRegisterCache;
 };
 
 struct IR_Comment {
@@ -185,7 +189,7 @@ IR_Error initializeRegisterAllocator(registerAllocator *allocator);
 IR_Error destroyRegisterAllocator   (registerAllocator *allocator);
 
 IR_Register allocateRegister(IR_Context *IRContext, registerAllocator *allocator, IR_BasicBlock *block);
-IR_Error    freeRegister    (registerAllocator *allocator, IR_Register    reg);
+IR_Error    freeRegister    (IR_Context *context, registerAllocator *allocator, IR_Register    reg);
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 

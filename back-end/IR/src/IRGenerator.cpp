@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <fstream>
 
 static const char *IR_OperatorToString(IR_Operator op) {
     switch (op) {
@@ -99,6 +100,97 @@ static std::string IR_OperandToString(const IR_Operand &operand) {
     return result;
 }
 
+IR_Error generateASM(IR *IR, const char *filename) {
+    customWarning(IR, IR_Error::IR_BAD_POINTER);
+
+    // Открываем файл для записи
+    std::ofstream outFile(filename);
+    if (!outFile.is_open()) {
+        customPrint(red, bold, bgDefault, "Error: Could not open file %s for writing\n", filename);
+        return IR_Error::IO_ERROR;
+    }
+
+    customPrint(blue, bold, bgDefault, "Generating ASM file: %s\n", filename);
+
+    // Записываем заголовок
+    outFile << "; Generated ASM from IR\n";
+    outFile << "section .text\n";
+    outFile << "global мэйн\n\n"; // Сохраняем исходное имя точки входа
+
+    // Проходим по всем базовым блокам
+    ssize_t currentBlockIndex = IR->basicBlocks->next[0];
+    while (currentBlockIndex != 0) {
+        IR_BasicBlock *block = IR->basicBlocks->data[currentBlockIndex];
+        customPrint(blue, bold, bgDefault, "Generating ASM for block: %s\n", block->label ? block->label : "Unknown");
+
+        // Записываем метку блока, сохраняя исходное имя
+        std::string blockLabel = block->label ? block->label : "block_" + std::to_string(currentBlockIndex);
+        outFile << blockLabel << ":\n";
+
+        // Проходим по инструкциям блока
+        ssize_t currentInstIndex = block->instructions->next[0];
+        while (currentInstIndex != 0) {
+            IR_Instruction &inst = block->instructions->data[currentInstIndex];
+            std::string instStr = IR_OperatorToString(inst.op);
+
+            // Специальная обработка инструкций
+            if (inst.op == IR_Operator::IR_CALL) {
+                // Для CALL используем имя функции из nameTable
+                if (inst.firstOperand.type == IR_OperandType::FUNC_INDEX) {
+                    // Предполагаем, что functionIndex соответствует nameTableIndex функции
+                    // Нужно получить имя функции из IRContext->ASTContext->nameTable
+                    // Для этого нужно передать IRContext в generateASM или хранить имена в IR
+                    // Пока используем func_<index> для совместимости, но это можно улучшить
+                    outFile << "    call func_" << inst.firstOperand.functionIndex << "\n";
+                } else {
+                    outFile << "    call " << IR_OperandToString(inst.firstOperand) << "\n";
+                }
+            } else if (inst.op == IR_Operator::IR_JMP || inst.op == IR_Operator::IR_JE || inst.op == IR_Operator::IR_JNE ||
+                       inst.op == IR_Operator::IR_JL || inst.op == IR_Operator::IR_JLE ||
+                       inst.op == IR_Operator::IR_JG || inst.op == IR_Operator::IR_JGE) {
+                // Для переходов используем метку
+                if (inst.firstOperand.type == IR_OperandType::LABEL) {
+                    outFile << "    " << instStr << " " << inst.firstOperand.label << "\n";
+                } else {
+                    outFile << "    " << instStr << " " << IR_OperandToString(inst.firstOperand) << "\n";
+                }
+            } else if (inst.op == IR_Operator::IR_SYSCALL) {
+                outFile << "    syscall\n";
+            } else if (inst.op == IR_Operator::IR_CQO) {
+                outFile << "    cqo\n";
+            } else {
+                // Обычные инструкции
+                outFile << "    " << instStr;
+                if (inst.operandCount > 0) {
+                    std::string firstOp = IR_OperandToString(inst.firstOperand);
+                    // Удаляем префикс "imm(" для немедленных значений
+                    if (inst.firstOperand.isImmediate && inst.firstOperand.type != IR_OperandType::IMM) {
+                        firstOp = firstOp.substr(4, firstOp.size() - 5);
+                    }
+                    outFile << " " << firstOp;
+                    if (inst.operandCount > 1) {
+                        std::string secondOp = IR_OperandToString(inst.secondOperand);
+                        if (inst.secondOperand.isImmediate && inst.secondOperand.type != IR_OperandType::IMM) {
+                            secondOp = secondOp.substr(4, secondOp.size() - 5);
+                        }
+                        outFile << ", " << secondOp;
+                    }
+                }
+                outFile << "\n";
+            }
+
+            currentInstIndex = block->instructions->next[currentInstIndex];
+        }
+
+        outFile << "\n";
+        currentBlockIndex = IR->basicBlocks->next[currentBlockIndex];
+    }
+
+    outFile.close();
+    customPrint(blue, bold, bgDefault, "ASM file %s generated successfully\n", filename);
+    return IR_Error::NO_ERRORS;
+}
+
 void debugPrintInstructions(IR_BasicBlock* block) {
     customPrint(blue, bold, bgDefault, "Debug: Printing instructions for block %s\n", block->label);
     printf("Instruction count: %zd\n", block->instructions->size);
@@ -186,7 +278,7 @@ IR_Error printIR(IR *IR) {
         ssize_t predIndex = block->predecessors->next[0];
 
         while (predIndex != 0) {
-            printf("%s ", block->predecessors->data[predIndex].label ? block->predecessors->data[predIndex].label : "Unknown");
+            printf("%s ", block->predecessors->data[predIndex]->label ? block->predecessors->data[predIndex]->label : "Unknown");
             predIndex = block->predecessors->next[predIndex];
         }
 
@@ -196,7 +288,7 @@ IR_Error printIR(IR *IR) {
         ssize_t succIndex = block->successors->next[0];
 
         while (succIndex != 0) {
-            printf("%s ", block->successors->data[succIndex].label ? block->successors->data[succIndex].label : "Unknown");
+            printf("%s ", block->successors->data[succIndex]->label ? block->successors->data[succIndex]->label : "Unknown");
             succIndex = block->successors->next[succIndex];
         }
 
@@ -227,13 +319,6 @@ void collectFunctionNodes(node<astNode>* current, std::vector<node<astNode>*>& f
 IR_Error generateIR(IR_Context *IRContext) {
     customWarning(IRContext, IR_Error::IR_CONTEXT_BAD_POINTER);
 
-    for (size_t i = 0; i < IRContext->ASTContext->localTables->currentIndex; i++) {
-        for (size_t j = 0; j < IRContext->ASTContext->localTables->data[i].size; j++) {
-            customPrint(blue, bold, bgDefault, "Local Table %zu: %s\n", i, 
-                        IRContext->ASTContext->nameTable->data[IRContext->ASTContext->localTables->data[i].elements.data[j].globalNameID].name);
-        }
-    }
-
     IR *IR = IRContext->representation;
 
     linkedList<IR_BasicBlock*> *blocks = (linkedList<IR_BasicBlock*> *)calloc(1, sizeof(linkedList<IR_BasicBlock*>));
@@ -243,40 +328,39 @@ IR_Error generateIR(IR_Context *IRContext) {
     IR->basicBlocks = blocks;
 
     std::vector<node<astNode> *> functions;
+
     if (IRContext->ASTContext->AST->root->left && 
         IRContext->ASTContext->AST->root->left->data.type == nodeType::FUNCTION_DEFINITION) {
         functions.push_back(IRContext->ASTContext->AST->root->left);
     } else {
-        customPrint(red, bold, bgDefault, "Error: root->left is not FUNCTION_DEFINITION\n");
         return IR_Error::AST_BAD_STRUCTURE;
     }
 
     collectFunctionNodes(IRContext->ASTContext->AST->root->right, functions);
-
-    if (functions.empty()) {
-        customPrint(red, bold, bgDefault, "Error: there are no FUNCTION_DEFINITION in AST\n");
-        return IR_Error::AST_BAD_STRUCTURE;
-    }
+    customWarning(!functions.empty(), IR_Error::AST_BAD_STRUCTURE);
 
     node<astNode> *entryPointNode = nullptr;
     std::string entryPointName = IRContext->ASTContext->nameTable->data[IRContext->ASTContext->entryPoint].name;
     size_t entryPointIndex = 0;
 
+    for (size_t i = 0; i < functions.size(); i++) {
+        size_t globalNameID = functions[i]->data.data.nameTableIndex;
+        std::string funcName = IRContext->ASTContext->nameTable->data[globalNameID].name;
+
+        IRContext->functionNameToIndex[funcName] = i;
+    }
+
     for (size_t i = 0; i < functions.size(); ++i) {
         std::string funcName = IRContext->ASTContext->nameTable->data[functions[i]->data.data.nameTableIndex].name;
-        customPrint(blue, bold, bgDefault, "Function node: %s\n", funcName.c_str());
 
         if (funcName == entryPointName) {
-            entryPointNode = functions[i];
+            entryPointNode  = functions[i];
             entryPointIndex = i;
             break;
         }
     }
 
-    if (!entryPointNode) {
-        customPrint(red, bold, bgDefault, "Error: Entry Point '%s' not found\n", entryPointName.c_str());
-        return IR_Error::AST_BAD_STRUCTURE;
-    }
+    customWarning(entryPointNode, IR_Error::NODE_BAD_POINTER);
 
     IR_BasicBlock *entryPointBlock = (IR_BasicBlock *)calloc(1, sizeof(IR_BasicBlock));
     customWarning(entryPointBlock, IR_Error::BASIC_BLOCK_BAD_POINTER);
@@ -288,7 +372,7 @@ IR_Error generateIR(IR_Context *IRContext) {
 
     IRContext->currentFunction = IRContext->ASTContext->entryPoint;
     size_t localTableIndex = IRContext->ASTContext->functionToLocalTable[IRContext->currentFunction];
-    customPrint(blue, bold, bgDefault, "Generate IR for entry point, localTableIndex: %zd\n", localTableIndex);
+    
     IR_Error error = generateFunctionIR(IRContext, entryPointNode, entryPointBlock);
     customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_FUNCTION_IR_ERROR);
 
@@ -298,8 +382,6 @@ IR_Error generateIR(IR_Context *IRContext) {
             std::string funcName = IRContext->ASTContext->nameTable->data[func->data.data.nameTableIndex].name;
             IRContext->currentFunction = func->data.data.nameTableIndex;
             localTableIndex = IRContext->ASTContext->functionToLocalTable[IRContext->currentFunction];
-            customPrint(blue, bold, bgDefault, "Generate IR for function %s, localTableIndex: %zd\n", 
-                        IRContext->ASTContext->nameTable->data[IRContext->currentFunction].name, localTableIndex);
 
             IR_BasicBlock *funcBlock = (IR_BasicBlock *)calloc(1, sizeof(IR_BasicBlock));
             customWarning(funcBlock, IR_Error::BASIC_BLOCK_BAD_POINTER);
@@ -326,15 +408,18 @@ IR_Error generateIR(IR_Context *IRContext) {
     return IR_Error::NO_ERRORS;
 }
 
-IR_Error generateFunctionIR(IR_Context *IRContext, node<astNode> *node, IR_BasicBlock *block) {
+IR_Error generateFunctionIR(IR_Context *IRContext, node<astNode> *currentNode, IR_BasicBlock *block) {
     customWarning(IRContext, IR_Error::IR_CONTEXT_BAD_POINTER);
-    customWarning(node, IR_Error::NODE_BAD_POINTER);
+    customWarning(currentNode, IR_Error::NODE_BAD_POINTER);
     customWarning(block, IR_Error::BASIC_BLOCK_BAD_POINTER);
 
-    if (node->data.type != nodeType::FUNCTION_DEFINITION) {
-        customPrint(yellow, bold, bgDefault, "Expected FUNCTION_DEFINITION, got type: %d\n", (int)node->data.type);
+    if (currentNode->data.type != nodeType::FUNCTION_DEFINITION) {
+        customPrint(red, bold, bgDefault, "Expected FUNCTION_DEFINITION, got type: %d\n", (int)currentNode->data.type);
         return IR_Error::AST_BAD_STRUCTURE;
     }
+
+    std::string funcName = IRContext->ASTContext->nameTable->data[IRContext->currentFunction].name;
+    customPrint(blue, bold, bgDefault, "Generating IR for function: %s\n", funcName.c_str());
 
     IRContext->hasReturn = false;
     IRContext->regAllocator->stackOffset = 0;
@@ -344,97 +429,210 @@ IR_Error generateFunctionIR(IR_Context *IRContext, node<astNode> *node, IR_Basic
 
     size_t localTableIndex = IRContext->ASTContext->functionToLocalTable[IRContext->currentFunction];
     size_t localSize = IRContext->ASTContext->localTables->data[localTableIndex].size * 8;
+
+    // Убираем частный случай для точки входа, если не требуется дополнительное место
+    // Если точка входа требует дополнительного места, это должно быть задано в AST
+    customPrint(blue, bold, bgDefault, "Allocating stack: %zd bytes\n", localSize);
     SUB_REG_IMM(IR_Register::RSP, localSize);
 
-    if (!node->right || node->right->data.type != nodeType::PARAMETERS) {
-        customPrint(yellow, bold, bgDefault, "No PARAMETERS node in function\n");
+    // Process parameters (includes body)
+    if (!currentNode->right || currentNode->right->data.type != nodeType::PARAMETERS) {
+        customPrint(red, bold, bgDefault, "Expected PARAMETERS node, got type: %d\n", 
+                    currentNode->right ? (int)currentNode->right->data.type : -1);
         return IR_Error::AST_BAD_STRUCTURE;
     }
 
-    IR_Error error = generateStatementIR(IRContext, node->right, block);
-    customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_STATEMENT_IR_ERROR);
+    customPrint(blue, bold, bgDefault, "Processing parameters\n");
+    IR_Error error = generateStatementIR(IRContext, currentNode->right, block);
+    if (error != IR_Error::NO_ERRORS) {
+        customPrint(red, bold, bgDefault, "Error processing parameters: %d\n", (int)error);
+        return error;
+    }
 
     if (!IRContext->hasReturn) {
+        customPrint(blue, bold, bgDefault, "Adding default return\n");
         MOV_REG_REG(IR_Register::RSP, IR_Register::RBP);
         POP_REG(IR_Register::RBP);
         RET();
     }
 
-    customPrint(red, bold, bgDefault, "EntryPoint: %p, Block: %p\n", 
-                IRContext->representation->entryPoint, block);
-
     block->instructionCount = block->instructions->size;
     customPrint(blue, bold, bgDefault, "Set block->instructionCount to %zd\n", block->instructionCount);
-
-    customPrint(blue, bold, bgDefault, "Finished generating IR for function %s with %d instructions\n", 
-                IRContext->ASTContext->nameTable->data[IRContext->currentFunction].name, block->instructionCount);
+    customPrint(blue, bold, bgDefault, "Finished generating IR for function %s with %zd instructions\n", 
+                funcName.c_str(), block->instructionCount);
 
     return IR_Error::NO_ERRORS;
 }
 
-IR_Error generateStatementIR(IR_Context *IRContext, node<astNode> *node, IR_BasicBlock *block) {
+IR_Error generateStatementIR(IR_Context *IRContext, node<astNode> *currentNode, IR_BasicBlock *block) {
     customWarning(IRContext, IR_Error::IR_CONTEXT_BAD_POINTER);
     customWarning(block, IR_Error::BASIC_BLOCK_BAD_POINTER);
 
-    if (!node) {
-        customPrint(yellow, bold, bgDefault, "Null statement node\n");
-        return IR_Error::NO_ERRORS;
+    customWarning(currentNode, IR_Error::NODE_BAD_POINTER);
+
+    customPrint(blue, bold, bgDefault, "Processing node: type=%d, keyword=%d, nameTableIndex=%zd\n",
+        (int)currentNode->data.type, (int)currentNode->data.data.keyword, currentNode->data.data.nameTableIndex);
+    if (currentNode->data.type == nodeType::STRING && currentNode->data.data.nameTableIndex > 0) {
+        customPrint(blue, bold, bgDefault, "STRING node name: %s\n",
+            IRContext->ASTContext->nameTable->data[currentNode->data.data.nameTableIndex].name);
     }
 
-    customPrint(blue, bold, bgDefault, "Processing node type: %d\n", (int)node->data.type);
-
-    switch (node->data.type) {
+    switch (currentNode->data.type) {
         case nodeType::VARIABLE_DECLARATION: {
             size_t offset = IRContext->regAllocator->stackOffset + 8;
             IRContext->regAllocator->stackOffset += 8;
-            node->data.rbpOffset = offset;
-        
-            std::string varName = IRContext->ASTContext->nameTable->data[node->data.data.nameTableIndex].name;
-            customPrint(blue, bold, bgDefault, "Variable Declaration: %s, assigned offset: %zd\n", 
-                        varName.c_str(), offset);
+            currentNode->data.rbpOffset = offset;
         
             localNameTable *localTable = &IRContext->ASTContext->localTables->data[IRContext->currentFunction];
             for (size_t i = 0; i < localTable->size; i++) {
-                if (localTable->elements.data[i].globalNameID == node->data.data.nameTableIndex) {
+                if (localTable->elements.data[i].globalNameID == currentNode->data.data.nameTableIndex) {
                     localTable->elements.data[i].rbpOffset = offset;
                     break;
                 }
             }
         
-            if (node->right && node->right->data.type == nodeType::KEYWORD && 
-                node->right->data.data.keyword == Keyword::ASSIGNMENT) {
-                customPrint(blue, bold, bgDefault, "Processing initializer for %s, right node type: %d, keyword: %d\n", 
-                            varName.c_str(), (int)node->right->data.type, (int)node->right->data.data.keyword);
-        
+            if (currentNode->right && currentNode->right->data.type == nodeType::KEYWORD && 
+                currentNode->right->data.data.keyword == Keyword::ASSIGNMENT) {
                 IR_Register resultReg;
-                IR_Error error = generateExpressionIR(IRContext, node->right->left, block, resultReg);
-                if (error != IR_Error::NO_ERRORS) {
-                    customWarning(false, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
-                    return error;
-                }
+                IR_Error error = generateExpressionIR(IRContext, currentNode->right->left, block, resultReg);
+                customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
         
                 MOV_MEM_REG_MINUS_IMM_REG(IR_Register::RBP, offset, resultReg);
-                freeRegister(IRContext->regAllocator, resultReg);
+                IRContext->variableRegisterCache[currentNode->data.data.nameTableIndex] = resultReg;
+                // Освобождаем resultReg, если он не нужен позже
+                // freeRegister(IRContext, IRContext->regAllocator, resultReg);
             }
+        
             break;
         }
         
         case nodeType::PARAMETERS: {
-            if (node->right) {
-                if (node->right->data.type != nodeType::KEYWORD || 
-                    node->right->data.data.keyword != Keyword::OPERATOR_SEPARATOR) {
-                    customPrint(yellow, bold, bgDefault, "Expected OPERATOR_SEPARATOR, got type: %d\n", 
-                                (int)node->right->data.type);
-                    return IR_Error::AST_BAD_STRUCTURE;
+            node<astNode> *paramNode = currentNode->left;
+            size_t paramIndex = 0;
+            static const IR_Register argRegisters[] = {
+                IR_Register::RDI, IR_Register::RSI, IR_Register::RDX,
+                IR_Register::RCX, IR_Register::R8, IR_Register::R9
+            };
+            while (paramNode && paramNode->data.type == nodeType::VARIABLE_DECLARATION) {
+                size_t offset = IRContext->regAllocator->stackOffset + 8;
+                IRContext->regAllocator->stackOffset += 8;
+                paramNode->data.rbpOffset = offset;
+    
+                localNameTable *localTable = &IRContext->ASTContext->localTables->data[IRContext->currentFunction];
+                bool found = false;
+                for (size_t i = 0; i < localTable->size; i++) {
+                    if (localTable->elements.data[i].globalNameID == paramNode->data.data.nameTableIndex) {
+                        localTable->elements.data[i].rbpOffset = offset;
+                        found = true;
+                        break;
+                    }
                 }
-                IR_Error error = generateStatementIR(IRContext, node->right, block);
+                if (!found) {
+                    customPrint(red, bold, bgDefault, "Error: Parameter with nameTableIndex %zd not found in localTable\n",
+                                paramNode->data.data.nameTableIndex);
+                    return IR_Error::VARIABLE_NOT_FOUND;
+                }
+    
+                // Сохраняем параметр в память
+                if (paramIndex < 6) {
+                    customPrint(blue, bold, bgDefault, "Storing parameter %zd from %s to [rbp - %zd]\n", 
+                                paramIndex, IR_RegisterToString(argRegisters[paramIndex]), offset);
+                    MOV_MEM_REG_MINUS_IMM_REG(IR_Register::RBP, offset, argRegisters[paramIndex]);
+                } else {
+                    size_t stackOffset = (paramIndex - 6) * 8 + 16;
+                    MOV_REG_MEM_REG_PLUS_IMM(IR_Register::RAX, IR_Register::RBP, stackOffset);
+                    MOV_MEM_REG_MINUS_IMM_REG(IR_Register::RBP, offset, IR_Register::RAX);
+                }
+                paramNode = paramNode->right;
+                paramIndex++;
+            }
+    
+            if (currentNode->right) {
+                IR_Error error = generateStatementIR(IRContext, currentNode->right, block);
                 customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_STATEMENT_IR_ERROR);
             }
             break;
         }
 
+        case nodeType::FUNCTION_CALL: {
+            customPrint(blue, bold, bgDefault, "Processing FUNCTION_CALL node\n");
+            if (!currentNode->right || currentNode->right->data.type != nodeType::STRING ||
+                IRContext->ASTContext->nameTable->data[currentNode->right->data.data.nameTableIndex].type != nameType::IDENTIFIER) {
+                customPrint(red, bold, bgDefault, "Invalid function name in FUNCTION_CALL\n");
+                return IR_Error::AST_BAD_STRUCTURE;
+            }
+            std::string funcName = IRContext->ASTContext->nameTable->data[currentNode->right->data.data.nameTableIndex].name;
+            customPrint(blue, bold, bgDefault, "Function call: %s\n", funcName.c_str());
+        
+            // Получаем индекс функции
+            auto funcIt = IRContext->functionNameToIndex.find(funcName);
+            if (funcIt == IRContext->functionNameToIndex.end()) {
+                customPrint(red, bold, bgDefault, "Error: Function %s not found in functionNameToIndex\n", funcName.c_str());
+                return IR_Error::AST_BAD_STRUCTURE;
+            }
+            size_t funcIndex = funcIt->second;
+        
+            // Handle arguments
+            std::vector<IR_Register> argRegs;
+            if (currentNode->left && currentNode->left->data.type == nodeType::KEYWORD && 
+                currentNode->left->data.data.keyword == Keyword::ARGUMENT_SEPARATOR) {
+                node<astNode> *argNode = currentNode->left->left;
+                while (argNode) {
+                    IR_Register argReg;
+                    IR_Error error = generateExpressionIR(IRContext, argNode, block, argReg);
+                    if (error != IR_Error::NO_ERRORS) {
+                        customPrint(red, bold, bgDefault, "Error generating IR for argument\n");
+                        return error;
+                    }
+                    argRegs.push_back(argReg);
+                    argNode = (argNode->right && argNode->right->data.type == nodeType::KEYWORD && 
+                               argNode->right->data.data.keyword == Keyword::ARGUMENT_SEPARATOR) ? 
+                              argNode->right->left : nullptr;
+                }
+            } else if (currentNode->left) {
+                IR_Register argReg;
+                IR_Error error = generateExpressionIR(IRContext, currentNode->left, block, argReg);
+                if (error != IR_Error::NO_ERRORS) {
+                    customPrint(red, bold, bgDefault, "Error generating IR for argument\n");
+                    return error;
+                }
+                argRegs.push_back(argReg);
+            }
+        
+            // Pass arguments
+            static const IR_Register argRegisters[] = {
+                IR_Register::RDI, IR_Register::RSI, IR_Register::RDX,
+                IR_Register::RCX, IR_Register::R8, IR_Register::R9
+            };
+            for (size_t i = 0; i < argRegs.size() && i < 6; ++i) {
+                if (argRegs[i] != argRegisters[i]) {
+                    MOV_REG_REG(argRegisters[i], argRegs[i]);
+                }
+                freeRegister(IRContext, IRContext->regAllocator, argRegs[i]);
+            }
+            if (argRegs.size() > 6) {
+                for (size_t i = 6; i < argRegs.size(); ++i) {
+                    PUSH_REG(argRegs[i]);
+                    freeRegister(IRContext, IRContext->regAllocator, argRegs[i]);
+                }
+            }
+        
+            // Generate call
+            IR_Instruction callInst = {
+                .op = IR_Operator::IR_CALL,
+                .operandCount = 1,
+                .firstOperand = { .type = IR_OperandType::FUNC_INDEX, .functionIndex = funcIndex }
+            };
+            insertNode(block->instructions, callInst);
+        
+            // Return result
+            IR_Register resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
+            MOV_REG_REG(resultReg, IR_Register::RAX);
+            break;
+        }
+
         case nodeType::KEYWORD: {
-            switch (node->data.data.keyword) {
+            switch (currentNode->data.data.keyword) {
                 case Keyword::IF: {
                     IR_BasicBlock *thenBlock = (IR_BasicBlock *)calloc(1, sizeof(IR_BasicBlock));
                     customWarning(thenBlock, IR_Error::BASIC_BLOCK_BAD_POINTER);
@@ -445,7 +643,7 @@ IR_Error generateStatementIR(IR_Context *IRContext, node<astNode> *node, IR_Basi
                     initializeBasicBlock(mergeBlock, "merge");
 
                     IR_Register conditionReg;
-                    IR_Error error = generateExpressionIR(IRContext, node->left, block, conditionReg);
+                    IR_Error error = generateExpressionIR(IRContext, currentNode->left, block, conditionReg);
                     customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
 
                     insertNode(IRContext->representation->basicBlocks, thenBlock);
@@ -454,36 +652,36 @@ IR_Error generateStatementIR(IR_Context *IRContext, node<astNode> *node, IR_Basi
                     CMP_REG_IMM(conditionReg, 0);
                     JMP_CONDITION(IR_Operator::IR_JE);
 
-                    insertNode(block->successors, *thenBlock);
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(thenBlock->predecessors, *block);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, thenBlock);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(thenBlock->predecessors, block);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = thenBlock;
 
-                    if (node->right) {
-                        generateStatementIR(IRContext, node->right, block);
+                    if (currentNode->right) {
+                        generateStatementIR(IRContext, currentNode->right, block);
                     }
 
                     JMP();
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = mergeBlock;
-                    freeRegister(IRContext->regAllocator, conditionReg);
+                    freeRegister(IRContext, IRContext->regAllocator, conditionReg);
                     break;
                 }
 
                 case Keyword::ASSIGNMENT: {
                     IR_Register resultReg;
-                    IR_Error error = generateExpressionIR(IRContext, node->right, block, resultReg);
+                    IR_Error error = generateExpressionIR(IRContext, currentNode->right, block, resultReg);
                     customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
-
-                    size_t offset = getVariableOffset(IRContext, node->left->data.data.nameTableIndex);
+                
+                    size_t offset = getVariableOffset(IRContext, currentNode->left->data.data.nameTableIndex);
                     customWarning(offset != 0, IR_Error::VARIABLE_NOT_FOUND);
-
+                
                     MOV_MEM_REG_MINUS_IMM_REG(IR_Register::RBP, offset, resultReg);
-                    freeRegister(IRContext->regAllocator, resultReg);
+                    IRContext->variableRegisterCache[currentNode->left->data.data.nameTableIndex] = resultReg;
                     break;
                 }
 
@@ -509,13 +707,15 @@ IR_Error generateStatementIR(IR_Context *IRContext, node<astNode> *node, IR_Basi
                         .operandCount = 1,
                         .firstOperand = { .type = IR_OperandType::LABEL, .label = condBlock->label }
                     };
+
                     insertNode(block->instructions, jmpToCond);
-                    insertNode(block->successors, *condBlock);
-                    insertNode(condBlock->predecessors, *block);
+                    insertNode(block->successors, condBlock);
+                    insertNode(condBlock->predecessors, block);
                 
                     block = condBlock;
                     IR_Register conditionReg;
-                    IR_Error error = generateExpressionIR(IRContext, node->left, block, conditionReg);
+
+                    IR_Error error = generateExpressionIR(IRContext, currentNode->left, block, conditionReg);
                     customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
                 
                     IR_Instruction jmpToMerge = {
@@ -523,15 +723,17 @@ IR_Error generateStatementIR(IR_Context *IRContext, node<astNode> *node, IR_Basi
                         .operandCount = 1,
                         .firstOperand = { .type = IR_OperandType::LABEL, .label = mergeBlock->label }
                     };
+
                     insertNode(block->instructions, jmpToMerge);
-                    insertNode(block->successors, *bodyBlock);
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(bodyBlock->predecessors, *block);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, bodyBlock);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(bodyBlock->predecessors, block);
+                    insertNode(mergeBlock->predecessors, block);
                 
                     block = bodyBlock;
-                    if (node->right) {
-                        error = generateStatementIR(IRContext, node->right, block);
+
+                    if (currentNode->right) {
+                        error = generateStatementIR(IRContext, currentNode->right, block);
                         customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_STATEMENT_IR_ERROR);
                     }
                 
@@ -540,64 +742,57 @@ IR_Error generateStatementIR(IR_Context *IRContext, node<astNode> *node, IR_Basi
                         .operandCount = 1,
                         .firstOperand = { .type = IR_OperandType::LABEL, .label = condBlock->label }
                     };
+
                     insertNode(block->instructions, jmpBack);
-                    insertNode(block->successors, *condBlock);
-                    insertNode(condBlock->predecessors, *block);
+                    insertNode(block->successors, condBlock);
+                    insertNode(condBlock->predecessors, block);
                 
                     block = mergeBlock;
-                    freeRegister(IRContext->regAllocator, conditionReg);
+                    freeRegister(IRContext, IRContext->regAllocator, conditionReg);
                     break;
                 }
 
                 case Keyword::RETURN: {
-                    customPrint(blue, bold, bgDefault, "Processing RETURN statement\n");
                     IRContext->hasReturn = true;
-
-                    if (node->right) {
+                    if (currentNode->right) {
                         IR_Register resultReg;
-                        IR_Error error = generateExpressionIR(IRContext, node->right, block, resultReg);
-
+                        IR_Error error = generateExpressionIR(IRContext, currentNode->right, block, resultReg);
                         if (error != IR_Error::NO_ERRORS) {
-                            customPrint(red, bold, bgDefault, "Error in generateExpressionIR for RETURN\n");
+                            customPrint(red, bold, bgDefault, "Error generating IR for RETURN expression: %d\n", (int)error);
                             return error;
                         }
-
                         if (resultReg != IR_Register::RAX) {
                             MOV_REG_REG(IR_Register::RAX, resultReg);
                         }
-
-                        freeRegister(IRContext->regAllocator, resultReg);
-
+                        freeRegister(IRContext, IRContext->regAllocator, resultReg);
                     }
-
                     MOV_REG_REG(IR_Register::RSP, IR_Register::RBP);
                     POP_REG(IR_Register::RBP);
                     RET();
-                    
-                    customPrint(blue, bold, bgDefault, "Finished processing RETURN statement\n");
                     break;
                 }
 
                 case Keyword::OUT: {
                     IR_Register resultReg;
-                    IR_Error error = generateExpressionIR(IRContext, node->right, block, resultReg);
-                    customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
-                    
-                    MOV_REG_REG(IR_Register::RDI, resultReg);
+                    IR_Error error = generateExpressionIR(IRContext, currentNode->right, block, resultReg);
+                    if (error != IR_Error::NO_ERRORS) {
+                        customPrint(red, bold, bgDefault, "Error generating IR for OUT expression: %d\n", (int)error);
+                        return error;
+                    }
+                    // Проверяем, находится ли результат уже в rdi
+                    if (resultReg != IR_Register::RDI) {
+                        MOV_REG_REG(IR_Register::RDI, resultReg);
+                    }
                     MOV_REG_IMM(IR_Register::RAX, 1);
                     MOV_REG_IMM(IR_Register::RSI, 1);
                     SYSCALL();
-                    freeRegister(IRContext->regAllocator, resultReg);
+                    freeRegister(IRContext, IRContext->regAllocator, resultReg);
                     break;
                 }
 
                 case Keyword::BREAK:
                 case Keyword::CONTINUE:
                 case Keyword::IN:
-                case Keyword::FUNCTION_CALL: {
-                    return IR_Error::NOT_IMPLEMENTED;
-                }
-
                 case Keyword::ABORT: {
                     MOV_REG_IMM(IR_Register::RDI, 1);
                     MOV_REG_IMM(IR_Register::RAX, 60);
@@ -606,118 +801,252 @@ IR_Error generateStatementIR(IR_Context *IRContext, node<astNode> *node, IR_Basi
                 }
 
                 case Keyword::OPERATOR_SEPARATOR: {
-                    customPrint(blue, bold, bgDefault, "Processing OPERATOR_SEPARATOR\n");
-                    if (node->left) {
-                        customPrint(blue, bold, bgDefault, "Processing left child of OPERATOR_SEPARATOR\n");
-                        IR_Error error = generateStatementIR(IRContext, node->left, block);
+                    if (currentNode->left) {
+                        customPrint(blue, bold, bgDefault, "Processing OPERATOR_SEPARATOR left: type=%d, keyword=%d\n",
+                                    (int)currentNode->left->data.type, (int)currentNode->left->data.data.keyword);
+                        IR_Error error = generateStatementIR(IRContext, currentNode->left, block);
                         if (error != IR_Error::NO_ERRORS) {
-                            customPrint(red, bold, bgDefault, "Error in left child of OPERATOR_SEPARATOR\n");
+                            customPrint(red, bold, bgDefault, "Error in OPERATOR_SEPARATOR left: %d\n", (int)error);
                             return error;
                         }
                     }
-                    if (node->right) {
-                        customPrint(blue, bold, bgDefault, "Processing right child of OPERATOR_SEPARATOR\n");
-                        IR_Error error = generateStatementIR(IRContext, node->right, block);
+                    if (currentNode->right) {
+                        customPrint(blue, bold, bgDefault, "Processing OPERATOR_SEPARATOR right: type=%d, keyword=%d\n",
+                                    (int)currentNode->right->data.type, (int)currentNode->right->data.data.keyword);
+                        IR_Error error = generateStatementIR(IRContext, currentNode->right, block);
                         if (error != IR_Error::NO_ERRORS) {
-                            customPrint(red, bold, bgDefault, "Error in right child of OPERATOR_SEPARATOR\n");
+                            customPrint(red, bold, bgDefault, "Error in OPERATOR_SEPARATOR right: %d\n", (int)error);
                             return error;
                         }
                     }
-                    customPrint(blue, bold, bgDefault, "Finished processing OPERATOR_SEPARATOR\n");
                     break;
                 }
 
                 default: {
-                    customPrint(yellow, bold, bgDefault, "Unknown keyword: %d\n", (int)node->data.data.keyword);
                     return IR_Error::AST_BAD_STRUCTURE;
                 }
             }
+
             break;
         }
 
         case nodeType::STRING: {
-            customPrint(yellow, bold, bgDefault, "Unexpected STRING node in statement context\n");
             return IR_Error::AST_BAD_STRUCTURE;
         }
 
         default:
-            customPrint(yellow, bold, bgDefault, "Unknown node type: %d\n", (int)node->data.type);
             return IR_Error::AST_BAD_STRUCTURE;
     }
 
     return IR_Error::NO_ERRORS;
 }
 
-IR_Error generateExpressionIR(IR_Context *IRContext, node<astNode> *node, IR_BasicBlock *block, IR_Register &resultReg) {
+IR_Error generateExpressionIR(IR_Context *IRContext, node<astNode> *currentNode, IR_BasicBlock *block, IR_Register &resultReg) {
     customWarning(IRContext, IR_Error::IR_CONTEXT_BAD_POINTER);
-    customWarning(node, IR_Error::NODE_BAD_POINTER);
+    customWarning(currentNode, IR_Error::NODE_BAD_POINTER);
     customWarning(block, IR_Error::BASIC_BLOCK_BAD_POINTER);
 
-    if (!node) {
+    customPrint(blue, bold, bgDefault, "Processing expression node: type=%d, keyword=%d, nameTableIndex=%zd\n",
+        (int)currentNode->data.type, (int)currentNode->data.data.keyword, currentNode->data.data.nameTableIndex);
+    if (currentNode->data.type == nodeType::STRING && currentNode->data.data.nameTableIndex > 0) {
+        customPrint(blue, bold, bgDefault, "STRING node name: %s\n",
+            IRContext->ASTContext->nameTable->data[currentNode->data.data.nameTableIndex].name);
+    }
+
+    if (!currentNode) {
         return IR_Error::AST_BAD_STRUCTURE;
     }
 
-    switch (node->data.type) {
+    switch (currentNode->data.type) {
         case nodeType::CONSTANT: {
             resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
-            MOV_REG_IMM(resultReg, node->data.data.number);
+            MOV_REG_IMM(resultReg, currentNode->data.data.number);
             break;
         }
 
         case nodeType::STRING: {
-            std::string varName = IRContext->ASTContext->nameTable->data[node->data.data.nameTableIndex].name;
-            customPrint(blue, bold, bgDefault, "Expression STRING node: %s, nameTableIndex: %zd\n", 
-                        varName.c_str(), node->data.data.nameTableIndex);
-        
-            resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
-            size_t offset = getVariableOffset(IRContext, node->data.data.nameTableIndex);
-            if (offset == 0) {
-                customPrint(red, bold, bgDefault, "Error: Variable %s not found in localNameTable\n", varName.c_str());
+            // Проверка указателей
+            if (!IRContext || !IRContext->ASTContext || !IRContext->ASTContext->nameTable) {
+                customPrint(red, bold, bgDefault, "Error: Null pointer in IRContext or nameTable\n");
+                return IR_Error::IR_CONTEXT_BAD_POINTER;
             }
-            customWarning(offset != 0, IR_Error::VARIABLE_NOT_FOUND);
-            MOV_REG_MEM_REG_MINUS_IMM(resultReg, IR_Register::RBP, offset);
-            customPrint(blue, bold, bgDefault, "Generated MOV instruction for variable to register %d\n", (int)resultReg);
+        
+            size_t nameTableIndex = currentNode->data.data.nameTableIndex;
+            if (nameTableIndex >= IRContext->ASTContext->nameTable->currentIndex) {
+                customPrint(red, bold, bgDefault, "Error: Invalid nameTableIndex %zd, max %zd\n",
+                            nameTableIndex, IRContext->ASTContext->nameTable->currentIndex);
+                return IR_Error::AST_BAD_STRUCTURE;
+            }
+        
+            std::string name = IRContext->ASTContext->nameTable->data[nameTableIndex].name;
+            nameType identType = IRContext->ASTContext->nameTable->data[nameTableIndex].type;
+        
+            if (identType != nameType::IDENTIFIER) {
+                customPrint(red, bold, bgDefault, "Error: Expected variable, got %s with type %d\n",
+                            name.c_str(), (int)identType);
+                return IR_Error::AST_BAD_STRUCTURE;
+            }
+        
+            size_t offset = getVariableOffset(IRContext, nameTableIndex);
+            if (offset == 0) {
+                customPrint(red, bold, bgDefault, "Error: Variable %s not found in localTable\n", name.c_str());
+                return IR_Error::VARIABLE_NOT_FOUND;
+            }
+        
+            // Проверяем кэш регистров
+            auto cacheIt = IRContext->variableRegisterCache.find(nameTableIndex);
+            if (cacheIt != IRContext->variableRegisterCache.end()) {
+                resultReg = cacheIt->second;
+                customPrint(blue, bold, bgDefault, "Using cached value of variable %s in %s\n",
+                            name.c_str(), IR_RegisterToString(resultReg));
+            } else {
+                resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
+                customPrint(blue, bold, bgDefault, "Loading variable %s from [rbp - %zd] to %s\n",
+                            name.c_str(), offset, IR_RegisterToString(resultReg));
+                MOV_REG_MEM_REG_MINUS_IMM(resultReg, IR_Register::RBP, offset);
+                IRContext->variableRegisterCache[nameTableIndex] = resultReg;
+            }
+        
+            break;
+        }
+
+        case nodeType::FUNCTION_CALL: {
+            customPrint(blue, bold, bgDefault, "Processing FUNCTION_CALL node\n");
+            if (!currentNode->right || currentNode->right->data.type != nodeType::STRING) {
+                customPrint(red, bold, bgDefault, "Invalid function name in FUNCTION_CALL\n");
+                return IR_Error::AST_BAD_STRUCTURE;
+            }
+            std::string funcName = IRContext->ASTContext->nameTable->data[currentNode->right->data.data.nameTableIndex].name;
+            customPrint(blue, bold, bgDefault, "Function call: %s\n", funcName.c_str());
+        
+            // Handle arguments
+            std::vector<IR_Register> argRegs;
+            if (currentNode->left && currentNode->left->data.type == nodeType::KEYWORD && 
+                currentNode->left->data.data.keyword == Keyword::ARGUMENT_SEPARATOR) {
+                node<astNode> *argNode = currentNode->left->left;
+                while (argNode) {
+                    IR_Register argReg;
+                    IR_Error error = generateExpressionIR(IRContext, argNode, block, argReg);
+                    if (error != IR_Error::NO_ERRORS) {
+                        customPrint(red, bold, bgDefault, "Error generating IR for argument\n");
+                        return error;
+                    }
+                    argRegs.push_back(argReg);
+                    argNode = (argNode->right && argNode->right->data.type == nodeType::KEYWORD && 
+                               argNode->right->data.data.keyword == Keyword::ARGUMENT_SEPARATOR) ? 
+                              argNode->right->left : nullptr;
+                }
+            } else if (currentNode->left) {
+                // Single argument
+                IR_Register argReg;
+                IR_Error error = generateExpressionIR(IRContext, currentNode->left, block, argReg);
+                if (error != IR_Error::NO_ERRORS) {
+                    customPrint(red, bold, bgDefault, "Error generating IR for argument\n");
+                    return error;
+                }
+                argRegs.push_back(argReg);
+            }
+        
+            // Pass arguments in registers
+            static const IR_Register argRegisters[] = {
+                IR_Register::RDI, IR_Register::RSI, IR_Register::RDX,
+                IR_Register::RCX, IR_Register::R8, IR_Register::R9
+            };
+            for (size_t i = 0; i < argRegs.size() && i < 6; ++i) {
+                if (argRegs[i] != argRegisters[i]) {
+                    MOV_REG_REG(argRegisters[i], argRegs[i]);
+                }
+                freeRegister(IRContext, IRContext->regAllocator, argRegs[i]);
+            }
+            if (argRegs.size() > 6) {
+                for (size_t i = 6; i < argRegs.size(); ++i) {
+                    PUSH_REG(argRegs[i]);
+                    freeRegister(IRContext, IRContext->regAllocator, argRegs[i]);
+                }
+            }
+        
+            // Generate call instruction
+            IR_Instruction callInst = {
+                .op = IR_Operator::IR_CALL,
+                .operandCount = 1,
+                .firstOperand = { .type = IR_OperandType::FUNC_INDEX, .functionIndex = currentNode->right->data.data.nameTableIndex }
+            };
+            insertNode(block->instructions, callInst);
+        
+            // Return result in resultReg
+            resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
+            MOV_REG_REG(resultReg, IR_Register::RAX);
             break;
         }
 
         case nodeType::KEYWORD: {
             IR_Register leftReg, rightReg;
-            IR_Error error = generateExpressionIR(IRContext, node->left, block, leftReg);
+            IR_Error error = generateExpressionIR(IRContext, currentNode->left, block, leftReg);
             customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
 
-            error = generateExpressionIR(IRContext, node->right, block, rightReg);
+            error = generateExpressionIR(IRContext, currentNode->right, block, rightReg);
             customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
 
-            switch (node->data.data.keyword) {
+            switch (currentNode->data.data.keyword) {
                 case Keyword::ADD: {
                     ADD_REG_REG(leftReg, rightReg);
                     resultReg = leftReg;
-                    freeRegister(IRContext->regAllocator, rightReg);
+                    freeRegister(IRContext, IRContext->regAllocator, rightReg);
                     break;
                 }
 
                 case Keyword::SUB: {
                     SUB_REG_REG(leftReg, rightReg);
                     resultReg = leftReg;
-                    freeRegister(IRContext->regAllocator, rightReg);
+                    freeRegister(IRContext, IRContext->regAllocator, rightReg);
                     break;
                 }
 
                 case Keyword::MUL: {
                     IMUL_REG_REG(leftReg, rightReg);
                     resultReg = leftReg;
-                    freeRegister(IRContext->regAllocator, rightReg);
+                    freeRegister(IRContext, IRContext->regAllocator, rightReg);
                     break;
                 }
 
                 case Keyword::DIV: {
-                    MOV_REG_REG(IR_Register::RAX, leftReg);
+                    // Гарантируем, что rightReg != RAX
+                    IR_Register divReg = rightReg;
+                    if (rightReg == IR_Register::RAX) {
+                        divReg = allocateRegister(IRContext, IRContext->regAllocator, block);
+                        MOV_REG_REG(divReg, rightReg);
+                    }
+                
+                    // Перемещаем leftReg в RAX, если нужно
+                    if (leftReg != IR_Register::RAX) {
+                        MOV_REG_REG(IR_Register::RAX, leftReg);
+                    }
+                
                     CQO();
-                    IDIV_REG(rightReg);
+                    IDIV_REG(divReg);
+                
                     resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
                     MOV_REG_REG(resultReg, IR_Register::RAX);
-                    freeRegister(IRContext->regAllocator, leftReg);
-                    freeRegister(IRContext->regAllocator, rightReg);
+                
+                    // Освобождаем регистры, избегая двойного освобождения
+                    if (leftReg != resultReg && leftReg != IR_Register::RAX) {
+                        freeRegister(IRContext, IRContext->regAllocator, leftReg);
+                    }
+                    if (divReg != resultReg && divReg != leftReg) {
+                        freeRegister(IRContext, IRContext->regAllocator, divReg);
+                    }
+                
+                    // Обновляем кэш, если это присваивание
+                    node<astNode> *parent = currentNode;
+                    while (parent && parent->data.type != nodeType::VARIABLE_DECLARATION && parent->data.type != nodeType::KEYWORD) {
+                        parent = parent->parent;
+                    }
+                    if (parent && parent->data.type == nodeType::VARIABLE_DECLARATION) {
+                        IRContext->variableRegisterCache[parent->data.data.nameTableIndex] = resultReg;
+                    } else if (parent && parent->data.type == nodeType::KEYWORD && parent->data.data.keyword == Keyword::ASSIGNMENT) {
+                        IRContext->variableRegisterCache[parent->left->data.data.nameTableIndex] = resultReg;
+                    }
+                
                     break;
                 }
 
@@ -743,31 +1072,32 @@ IR_Error generateExpressionIR(IR_Context *IRContext, node<astNode> *node, IR_Bas
                     insertNode(IRContext->representation->basicBlocks, mergeBlock);
 
                     IR_Operator jmpOp;
-                    switch (node->data.data.keyword) {
-                        case Keyword::EQUAL: jmpOp = IR_Operator::IR_JNE; break;
-                        case Keyword::LESS: jmpOp = IR_Operator::IR_JGE; break;
-                        case Keyword::GREATER: jmpOp = IR_Operator::IR_JLE; break;
-                        case Keyword::LESS_OR_EQUAL: jmpOp = IR_Operator::IR_JG; break;
-                        case Keyword::GREATER_OR_EQUAL: jmpOp = IR_Operator::IR_JL; break;
-                        case Keyword::NOT_EQUAL: jmpOp = IR_Operator::IR_JE; break;
+
+                    switch (currentNode->data.data.keyword) {
+                        case Keyword::EQUAL:            jmpOp = IR_Operator::IR_JE;     break;
+                        case Keyword::LESS:             jmpOp = IR_Operator::IR_JL;     break;
+                        case Keyword::GREATER:          jmpOp = IR_Operator::IR_JG;     break;
+                        case Keyword::LESS_OR_EQUAL:    jmpOp = IR_Operator::IR_JLE;    break;
+                        case Keyword::GREATER_OR_EQUAL: jmpOp = IR_Operator::IR_JGE;    break;
+                        case Keyword::NOT_EQUAL:        jmpOp = IR_Operator::IR_JNE;    break;
                         default: return IR_Error::AST_BAD_STRUCTURE;
                     }
 
                     JMP_CONDITION(jmpOp);
-                    insertNode(block->successors, *trueBlock);
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(trueBlock->predecessors, *block);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, trueBlock);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(trueBlock->predecessors, block);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = trueBlock;
                     MOV_REG_IMM(resultReg, 1);
                     JMP();
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = mergeBlock;
-                    freeRegister(IRContext->regAllocator, leftReg);
-                    freeRegister(IRContext->regAllocator, rightReg);
+                    freeRegister(IRContext, IRContext->regAllocator, leftReg);
+                    freeRegister(IRContext, IRContext->regAllocator, rightReg);
                     break;
                 }
 
@@ -785,34 +1115,34 @@ IR_Error generateExpressionIR(IR_Context *IRContext, node<astNode> *node, IR_Bas
                     insertNode(IRContext->representation->basicBlocks, mergeBlock);
 
                     JMP_CONDITION(IR_Operator::IR_JE);
-                    insertNode(block->successors, *falseBlock);
-                    insertNode(falseBlock->predecessors, *block);
+                    insertNode(block->successors, falseBlock);
+                    insertNode(falseBlock->predecessors, block);
 
-                    error = generateExpressionIR(IRContext, node->right, block, rightReg);
+                    error = generateExpressionIR(IRContext, currentNode->right, block, rightReg);
                     customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
 
                     CMP_REG_IMM(rightReg, 0);
                     JMP_CONDITION(IR_Operator::IR_JE);
-                    insertNode(block->successors, *falseBlock);
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(falseBlock->predecessors, *block);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, falseBlock);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(falseBlock->predecessors, block);
+                    insertNode(mergeBlock->predecessors, block);
 
                     resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
                     MOV_REG_IMM(resultReg, 1);
                     JMP();
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = falseBlock;
                     MOV_REG_IMM(resultReg, 0);
                     JMP();
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = mergeBlock;
-                    freeRegister(IRContext->regAllocator, leftReg);
-                    freeRegister(IRContext->regAllocator, rightReg);
+                    freeRegister(IRContext, IRContext->regAllocator, leftReg);
+                    freeRegister(IRContext, IRContext->regAllocator, rightReg);
                     break;
                 }
 
@@ -830,40 +1160,40 @@ IR_Error generateExpressionIR(IR_Context *IRContext, node<astNode> *node, IR_Bas
                     insertNode(IRContext->representation->basicBlocks, mergeBlock);
 
                     JMP_CONDITION(IR_Operator::IR_JE);
-                    insertNode(block->successors, *trueBlock);
-                    insertNode(trueBlock->predecessors, *block);
+                    insertNode(block->successors, trueBlock);
+                    insertNode(trueBlock->predecessors, block);
 
-                    error = generateExpressionIR(IRContext, node->right, block, rightReg);
+                    error = generateExpressionIR(IRContext, currentNode->right, block, rightReg);
                     customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
 
                     CMP_REG_IMM(rightReg, 1);
                     JMP_CONDITION(IR_Operator::IR_JE);
-                    insertNode(block->successors, *trueBlock);
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(trueBlock->predecessors, *block);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, trueBlock);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(trueBlock->predecessors, block);
+                    insertNode(mergeBlock->predecessors, block);
 
                     resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
                     MOV_REG_IMM(resultReg, 0);
                     JMP();
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = trueBlock;
                     MOV_REG_IMM(resultReg, 1);
                     JMP();
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = mergeBlock;
-                    freeRegister(IRContext->regAllocator, leftReg);
-                    freeRegister(IRContext->regAllocator, rightReg);
+                    freeRegister(IRContext, IRContext->regAllocator, leftReg);
+                    freeRegister(IRContext, IRContext->regAllocator, rightReg);
                     break;
                 }
 
                 case Keyword::NOT: {
                     IR_Register operandReg;
-                    IR_Error error = generateExpressionIR(IRContext, node->right, block, operandReg);
+                    IR_Error error = generateExpressionIR(IRContext, currentNode->right, block, operandReg);
                     customWarning(error == IR_Error::NO_ERRORS, IR_Error::GENERATE_EXPRESSION_IR_ERROR);
 
                     resultReg = allocateRegister(IRContext, IRContext->regAllocator, block);
@@ -882,19 +1212,19 @@ IR_Error generateExpressionIR(IR_Context *IRContext, node<astNode> *node, IR_Bas
                     insertNode(IRContext->representation->basicBlocks, mergeBlock);
 
                     JMP_CONDITION(IR_Operator::IR_JE);
-                    insertNode(block->successors, *trueBlock);
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(trueBlock->predecessors, *block);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, trueBlock);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(trueBlock->predecessors, block);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = trueBlock;
                     MOV_REG_IMM(resultReg, 1);
                     JMP();
-                    insertNode(block->successors, *mergeBlock);
-                    insertNode(mergeBlock->predecessors, *block);
+                    insertNode(block->successors, mergeBlock);
+                    insertNode(mergeBlock->predecessors, block);
 
                     block = mergeBlock;
-                    freeRegister(IRContext->regAllocator, operandReg);
+                    freeRegister(IRContext, IRContext->regAllocator, operandReg);
                     break;
                 }
 
@@ -929,24 +1259,13 @@ size_t getVariableOffset(IR_Context *IRContext, size_t nameTableIndex) {
     size_t localTableIndex = IRContext->ASTContext->functionToLocalTable[IRContext->currentFunction];
     localNameTable *localTable = &IRContext->ASTContext->localTables->data[localTableIndex];
 
-    customPrint(blue, bold, bgDefault, "Searching for variable with nameTableIndex: %zd in localTable[%zd]\n", 
-                nameTableIndex, localTableIndex);
-
     for (size_t i = 0; i < localTable->size; i++) {
         size_t globalID = localTable->elements.data[i].globalNameID;
-        customPrint(blue, bold, bgDefault, " localTable[%zd][%zd]: globalNameID=%zd, name=%s, rbpOffset=%zd\n", 
-                    localTableIndex, i, globalID, 
-                    IRContext->ASTContext->nameTable->data[globalID].name, 
-                    localTable->elements.data[i].rbpOffset);
+
         if (globalID == nameTableIndex) {
-            customPrint(blue, bold, bgDefault, "Found variable %s with nameTableIndex %zd, rbpOffset=%zd\n", 
-                        IRContext->ASTContext->nameTable->data[nameTableIndex].name, 
-                        nameTableIndex, localTable->elements.data[i].rbpOffset);
             return localTable->elements.data[i].rbpOffset;
         }
     }
 
-    customPrint(red, bold, bgDefault, "Variable with nameTableIndex %zd not found in localTable[%zd]\n", 
-                nameTableIndex, localTableIndex);
     return 0;
 }

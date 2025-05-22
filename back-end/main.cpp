@@ -9,8 +9,8 @@
 #include "IRGenerator.h"
 
 int main() {
-    const char *ASTFileName = "21.04.2025-21:03:35.AST";
-    const char *NTFileName  = "21.04.2025-21:03:35.nameTable";
+    const char *ASTFileName = "22.04.2025-01:33:22.AST";
+    const char *NTFileName  = "22.04.2025-01:33:22.nameTable";
 
     translationContext ASTContext = {};
     initializeTranslationContext(&ASTContext);
@@ -29,6 +29,8 @@ int main() {
     initializeDumpContext(&dumpContext, "output.dot");
 
     dumpTree(&ASTContext, &dumpContext, ASTContext.AST);
+
+    generateASM(IRContext.representation, "output.s");
 
     destroyTranslationContext(&ASTContext);
     destroyIRContext         (&IRContext);

@@ -16,6 +16,8 @@ size_t getVariableOffset        (IR_Context *IRContext, size_t nameTableIndex);
 
 IR_Error printIR(IR *IR);
 
+IR_Error generateASM(IR *IR, const char *filename);
+
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 #endif // IR_GENERATOR_H_

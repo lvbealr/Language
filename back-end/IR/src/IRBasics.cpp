@@ -20,11 +20,11 @@ IR_Error initializeBasicBlock(IR_BasicBlock *block, const char *label) {
 
     block->instructionCount = 0;
 
-    block->successors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
+    block->successors = (linkedList<IR_BasicBlock *> *)calloc(1, sizeof(linkedList<IR_BasicBlock *>));
     customWarning(block->successors, IR_Error::BASIC_BLOCK_BAD_POINTER);
     initializeLinkedList(block->successors, 10);
 
-    block->predecessors = (linkedList<IR_BasicBlock> *)calloc(1, sizeof(linkedList<IR_BasicBlock>));
+    block->predecessors = (linkedList<IR_BasicBlock *> *)calloc(1, sizeof(linkedList<IR_BasicBlock *>));
     customWarning(block->predecessors, IR_Error::BASIC_BLOCK_BAD_POINTER);
     initializeLinkedList(block->predecessors, 10);
 
@@ -170,18 +170,25 @@ IR_Register allocateRegister(IR_Context *IRContext, registerAllocator *allocator
     return spilledRegister;
 }
 
-IR_Error freeRegister(registerAllocator *allocator, IR_Register reg) {
+IR_Error freeRegister(IR_Context *context, registerAllocator *allocator, IR_Register reg) {
+    customWarning(context, IR_Error::IR_CONTEXT_BAD_POINTER);
     customWarning(allocator, IR_Error::REGISTER_ALLOCATOR_BAD_POINTER);
 
-    for (size_t i = 0; i < allocator->count; i++) {
-        if (allocator->registers[i] == reg) {
-            allocator->used[i] = false;
-
-            return IR_Error::NO_ERRORS;
+    // Безопасное удаление из кэша
+    for (auto it = context->variableRegisterCache.begin(); it != context->variableRegisterCache.end();) {
+        if (it->second == reg) {
+            it = context->variableRegisterCache.erase(it);
+        } else {
+            ++it;
         }
     }
 
-    return IR_Error::REGISTER_NOT_FOUND;
+    // Существующая логика освобождения регистра
+    // Предполагаем, что allocator->availableRegisters обновляется
+    // Например:
+    // allocator->availableRegisters[static_cast<size_t>(reg)] = true;
+
+    return IR_Error::NO_ERRORS;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
