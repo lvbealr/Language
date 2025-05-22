@@ -174,7 +174,6 @@ IR_Error freeRegister(IR_Context *context, registerAllocator *allocator, IR_Regi
     customWarning(context, IR_Error::IR_CONTEXT_BAD_POINTER);
     customWarning(allocator, IR_Error::REGISTER_ALLOCATOR_BAD_POINTER);
 
-    // Безопасное удаление из кэша
     for (auto it = context->variableRegisterCache.begin(); it != context->variableRegisterCache.end();) {
         if (it->second == reg) {
             it = context->variableRegisterCache.erase(it);
@@ -182,11 +181,6 @@ IR_Error freeRegister(IR_Context *context, registerAllocator *allocator, IR_Regi
             ++it;
         }
     }
-
-    // Существующая логика освобождения регистра
-    // Предполагаем, что allocator->availableRegisters обновляется
-    // Например:
-    // allocator->availableRegisters[static_cast<size_t>(reg)] = true;
 
     return IR_Error::NO_ERRORS;
 }
