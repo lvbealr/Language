@@ -1,12 +1,12 @@
-#include "core.h"
-#include "include/astDumpBack.h"
-#include "include/core.h"
-#include "treeReader.h"
 #include "AST.h"
+#include "ASMGenerator.h"
+#include "astDumpBack.h"
 #include "asmTranslator.h"
+#include "core.h"
 #include "IRBasics.h"
-#include "linkedListAddons.h"
 #include "IRGenerator.h"
+#include "linkedListAddons.h"
+#include "treeReader.h"
 
 int main() {
     const char *ASTFileName = "22.04.2025-01:33:22.AST";
@@ -30,7 +30,7 @@ int main() {
 
     dumpTree(&ASTContext, &dumpContext, ASTContext.AST);
 
-    generateASM(IRContext.representation, "output.s");
+    generateASM(&IRContext, IRContext.representation, "output.s");
 
     destroyTranslationContext(&ASTContext);
     destroyIRContext         (&IRContext);

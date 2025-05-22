@@ -12,12 +12,6 @@ IR_Error generateFunctionIR     (IR_Context *IRContext, node<astNode> *node, IR_
 IR_Error generateStatementIR    (IR_Context *IRContext, node<astNode> *node, IR_BasicBlock *block);
 IR_Error generateExpressionIR   (IR_Context *IRContext, node<astNode> *node, IR_BasicBlock *block, IR_Register &resultReg);
 
-size_t getVariableOffset        (IR_Context *IRContext, size_t nameTableIndex);
-
-IR_Error printIR(IR *IR);
-
-IR_Error generateASM(IR *IR, const char *filename);
-
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
 #endif // IR_GENERATOR_H_

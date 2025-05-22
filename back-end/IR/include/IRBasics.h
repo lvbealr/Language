@@ -2,14 +2,15 @@
 #define IR_BASICS_H_
 
 #include <stdlib.h>
-#include "linkedList.h"
-#include "binaryTree.h"
-#include "buffer.h"
-#include "AST.h"
-#include "asmTranslator.h"
-#include "core.h"
 #include <string>
 #include <unordered_map>
+
+#include "AST.h"
+#include "asmTranslator.h"
+#include "binaryTree.h"
+#include "buffer.h"
+#include "core.h"
+#include "linkedList.h"
 
 enum class IR_Error {
     NO_ERRORS                      = 0,
@@ -143,14 +144,14 @@ struct IR_BasicBlock {
     linkedList<IR_Instruction> *instructions = {};  // instructions in the block
     size_t instructionCount = {};                   // instructions count in the block 
 
-    linkedList<IR_BasicBlock *> *successors   = {};   // next blocks     (control flow graph)
-    linkedList<IR_BasicBlock *> *predecessors = {};   // previous blocks (control flow graph)
+    linkedList<IR_BasicBlock *> *successors   = {}; // next blocks     (control flow graph)
+    linkedList<IR_BasicBlock *> *predecessors = {}; // previous blocks (control flow graph)
 
     size_t functionIndex = {};                      // function index
 };
 
 struct IR {
-    linkedList<IR_BasicBlock *> *basicBlocks = {};    // basic blocks
+    linkedList<IR_BasicBlock *> *basicBlocks = {};  // basic blocks
 
     size_t         entryPointIndex = {};            // entry point index
     IR_BasicBlock *entryPoint = {};                 // entry point basic block
@@ -189,7 +190,7 @@ IR_Error initializeRegisterAllocator(registerAllocator *allocator);
 IR_Error destroyRegisterAllocator   (registerAllocator *allocator);
 
 IR_Register allocateRegister(IR_Context *IRContext, registerAllocator *allocator, IR_BasicBlock *block);
-IR_Error    freeRegister    (IR_Context *context, registerAllocator *allocator, IR_Register    reg);
+IR_Error    freeRegister    (IR_Context *context,   registerAllocator *allocator, IR_Register    reg);
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 

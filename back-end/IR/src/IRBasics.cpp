@@ -1,10 +1,10 @@
-#include "IRBasics.h"
-#include "customWarning.h"
-#include "codegen.h"
-#include "linkedListAddons.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#include "customWarning.h"
+#include "codegen.h"
+#include "IRBasics.h"
+#include "linkedListAddons.h"
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
