@@ -1,9 +1,9 @@
+#include <vector>
+
 #include "asmTranslator.h"
 #include "buffer.h"
 #include "core.h"
 #include "nameTable.h"
-
-#include <vector>
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 

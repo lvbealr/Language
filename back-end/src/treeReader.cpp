@@ -1,7 +1,8 @@
-#include "treeReader.h"
-#include "colorPrint.h"
-#include "core.h"
 #include <ctype.h>
+
+#include "core.h"
+#include "colorPrint.h"
+#include "treeReader.h"
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 

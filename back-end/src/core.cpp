@@ -1,8 +1,9 @@
-#include "core.h"
-#include "customWarning.h"
 #include <stdlib.h>
+
 #include "AST.h"
 #include "buffer.h"
+#include "customWarning.h"
+#include "core.h"
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 

@@ -2,6 +2,7 @@
 #define ASM_TRANSLATOR_H_
 
 #include <stdlib.h>
+
 #include "core.h"
 
 struct codeBlock {

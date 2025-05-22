@@ -1,12 +1,13 @@
 #ifndef CORE_H_
 #define CORE_H_
 
+#include <map>
+#include <stdbool.h>
+
 #include "AST.h"
 #include "binaryTreeDef.h"
 #include "buffer.h"
 #include "nameTable.h"
-#include <stdbool.h>
-#include <map>
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------- //
 
